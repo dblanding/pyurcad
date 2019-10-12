@@ -397,13 +397,21 @@ class PyurCad(framework.Framework):
                                'rotate': "Rotate Geometry",
                                'text': "Text",
                                'duplicate_item': "Copy Text",
-                               'drag_item': "Move Text",
-                               }
-        
-    tool_bar_functions = tuple(tool_bar_function_names.keys())
+                               'drag_item': "Move Text"}
+
+    tool_bar_functions = ('noop', 'hvcl', 'hcl',
+                          'vcl', 'acl', 'clrefang',
+                          'abcl', 'lbcl', 'parcl',
+                          'perpcl', 'cltan1', 'cltan2',
+                          'ccirc', 'cc3p', 'cccirc',
+                          'line', 'poly', 'rect',
+                          'circ', 'arcc2p', 'arc3p',
+                          'slot', 'split', 'join',
+                          'fillet', 'translate', 'rotate',
+                          'text', 'duplicate_item', 'drag_item')
+
     selected_tool_bar_function = tool_bar_functions[0]
 
-    
     catchCntr = False
     catch_pnt = None    # ID of (temporary) catch point
     catch_radius = 5    # radius of catch region
