@@ -1,0 +1,108 @@
+DXF to MI translation log file
+ PTC Creo Elements/Direct DXF/DWG Translator Release 19.0  (build 1071.07)
+dxfdwg
+-------------------------------------------------------
+SourceDirPath	./
+DestinDirPath	./
+KanjiTranslate	OFF
+EnableLegacyEncoding	OFF
+RecordByLayerInfo	OFF
+CustomUnits	OFF
+Units	mm
+UnitsScale	1
+ConvertMIDimensionsToGeometry	OFF
+ExplodeDXFDimensions	OFF
+KeepAttributesWithPart	OFF
+StartSection	DXF to MI Translator
+InternalHandseed	
+PolymarkerType	2
+OutputACADVersion	AC1015
+DXFDecimalPrecision	14
+ReadAllLayoutData	OFF
+TranslatePaperspace	OFF
+LayoutName	
+TranslateDXFPenLineSize	4
+TranslateInvisibleLayers	OFF
+TranslateDXFInvisibleEntities	OFF
+TranslateMIInvisibleEntities	OFF
+TranslateSubfixDimProp	ON
+TranslateSuperfixDimProp	ON
+ContourSnapGap	1e-012
+HatchCloseContours	ON
+KeepTopScale	OFF
+TranslateMIPenLineSize	1
+HighSplinePrecision	OFF
+HatchToContours	OFF
+CreateSplineFitPoints	ON
+SplineControlPointTranslation	OFF
+SVGDarkBackground	ON
+MinimumHatchSpacingDensity	0
+FontFilesPath	./
+FontMapACADtoMI	"ARIAL.TTF"	"Arial"	"hp_kanj2_c"	1.2	1.666
+FontMapACADtoMI	"ARIALBD.TTF"	"Arial"	"osd_default"	1.2	1.666
+FontMapACADtoMI	"ARIALUNI.TTF"	"Arial_Unicode_Ms"	"Arial_Unicode_Ms"	1.2	1.666
+FontMapACADtoMI	"complex.shx"	"hp_block_v"	"hp_kanj2_c"	0.95	1.666
+FontMapACADtoMI	"COUR.TTF"	"Courier_New"	"hp_kanj2_c"	0.75	1.666
+FontMapACADtoMI	"italic.shx"	"hp_jasc_v"	"hp_kanj2_c"	1.15	1.666
+FontMapACADtoMI	"simplex.shx"	"osd_default3"	"osd_default3"	0.95	1.666
+FontMapACADtoMI	"Tahoma.ttf"	"Tahoma"	"hp_kanj2_c"	1.25	1.666
+FontMapACADtoMI	"TIMES.TTF"	"Times_New_Roman"	"hp_kanj2_c"	1.03	1.666
+FontMapACADtoMI	"txt.shx"	"osd_default"	"osd_default"	0.9	1.666
+FontMapMItoACAD	"arial"	"ARIAL.TTF"	1.2	""	0
+FontMapMItoACAD	"arial_unicode_ms"	"ARIALUNI.TTF"	1.2	""	0
+FontMapMItoACAD	"courier_new"	"COUR.TTF"	0.75	""	0
+FontMapMItoACAD	"hp_block_c"	"complex.shx"	1.39	""	0
+FontMapMItoACAD	"hp_block_v"	"complex.shx"	0.95	""	0
+FontMapMItoACAD	"hp_d17_c"	"simplex.shx"	1.24	""	0
+FontMapMItoACAD	"hp_d17_v"	"simplex.shx"	0.95	""	0
+FontMapMItoACAD	"hp_i3098_c"	"txt.shx"	1.07	""	0
+FontMapMItoACAD	"hp_i3098_v"	"txt.shx"	0.9	""	0
+FontMapMItoACAD	"hp_jasc_c"	"italic.shx"	1.24	""	0
+FontMapMItoACAD	"hp_jasc_v"	"italic.shx"	1.15	""	0
+FontMapMItoACAD	"isocp"	"isocp___.ttf"	0.77	""	0
+FontMapMItoACAD	"osd_default"	"txt.shx"	0.9	""	0
+FontMapMItoACAD	"osd_default2"	"txt.shx"	1.07	""	0
+FontMapMItoACAD	"osd_default3"	"simplex.shx"	0.95	""	0
+FontMapMItoACAD	"tahoma"	"Tahoma.ttf"	1.25	""	0
+FontMapMItoACAD	"times_new_roman"	"TIMES.TTF"	1.03	""	0
+FontMapMI2toACAD	"hp_kanj2_c"	"msmincho.ttc"	0.89	"MS Mincho"	32785
+FontMapMI2toACAD	"hp_kanji_c"	"msmincho.ttc"	0.89	"MS Mincho"	32785
+ArrowMapACADtoMI	" "	Arrow	1	ON
+ArrowMapACADtoMI	"_ARCHTICK"	Slash	1	OFF
+ArrowMapACADtoMI	"_BOXBLANK"	Arrow	1	OFF
+ArrowMapACADtoMI	"_BOXFILLED"	Arrow	1	ON
+ArrowMapACADtoMI	"_CLOSED"	Arrow	1	OFF
+ArrowMapACADtoMI	"_CLOSEDBLANK"	Arrow	1	OFF
+ArrowMapACADtoMI	"_DATUMBLANK"	Triangle	1	OFF
+ArrowMapACADtoMI	"_DATUMFILLED"	Triangle	1	ON
+ArrowMapACADtoMI	"_DOT"	Dot	1	ON
+ArrowMapACADtoMI	"_DOTBLANK"	Dot	1	OFF
+ArrowMapACADtoMI	"_DOTSMALL"	Dot	0.5	ON
+ArrowMapACADtoMI	"_INTEGRAL"	Slash	1	ON
+ArrowMapACADtoMI	"_NONE"	NoArrow	1	ON
+ArrowMapACADtoMI	"_OBLIQUE"	Slash	1	OFF
+ArrowMapACADtoMI	"_OPEN"	Jis	1	ON
+ArrowMapACADtoMI	"_OPEN30"	Jis	1	OFF
+ArrowMapACADtoMI	"_OPEN90"	Jis	1	ON
+ArrowMapACADtoMI	"_ORIGIN"	Dot	1	OFF
+ArrowMapMItoACAD	NoArrow	OFF	"_NONE"	1
+ArrowMapMItoACAD	NoArrow	ON	"_NONE"	1
+ArrowMapMItoACAD	Arrow	OFF	"_CLOSED"	1
+ArrowMapMItoACAD	Arrow	ON	" "	1
+ArrowMapMItoACAD	Dot	OFF	"_ORIGIN"	1
+ArrowMapMItoACAD	Dot	ON	"_DOT"	1
+ArrowMapMItoACAD	Slash	OFF	"_OBLIQUE"	1
+ArrowMapMItoACAD	Slash	ON	"_OBLIQUE"	1
+ArrowMapMItoACAD	Triangle	OFF	"_DATUMBLANK"	1
+ArrowMapMItoACAD	Triangle	ON	"_DATUMFILLED"	1
+ArrowMapMItoACAD	Jis	OFF	"_OPEN30"	1
+ArrowMapMItoACAD	Jis	ON	"_OPEN30"	1
+LinetypeMapACADtoMI	"CENTER_DASH_DASH"	CenterDashDash
+LinetypeMapACADtoMI	"CONTINUOUS"	Solid
+LinetypeMapACADtoMI	"DASHED"	Dashed
+LinetypeMapACADtoMI	"DASH_CENTER"	DashCenter
+LinetypeMapACADtoMI	"DOTTED"	Dotted
+LinetypeMapACADtoMI	"DOT_CENTER"	DotCenter
+LinetypeMapACADtoMI	"LONG_DASHED"	LongDashed
+LinetypeMapACADtoMI	"PHANTOM"	Phantom
+No errors encountered during translation.
