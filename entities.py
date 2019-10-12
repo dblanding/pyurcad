@@ -32,7 +32,7 @@ class CL:
                 self.color == other.color)
 
     def __repr__(self):
-        return f"{self.type} object with coordinates {self.coords}"
+        return "{} object with coordinates {}".format(self.type, self.coords)
 
     def get_attribs(self):
         return (self.coords, self.color)
@@ -58,7 +58,7 @@ class CC:
                 self.color == other.color)
 
     def __repr__(self):
-        return f"{self.type} object with coordinates {self.coords}"
+        return "{} object with coordinates {}".format(self.type, self.coords)
 
     def get_attribs(self):
         return (self.coords, self.color)
@@ -84,7 +84,7 @@ class GL:
                 self.color == other.color)
 
     def __repr__(self):
-        return f"{self.type} object with coordinates {self.coords}"
+        return "{} object with coordinates {}".format(self.type, self.coords)
 
     def get_attribs(self):
         return (self.coords, self.color)
@@ -110,7 +110,7 @@ class GC:
                 self.color == other.color)
 
     def __repr__(self):
-        return f"{self.type} object with coordinates {self.coords}"
+        return "{} object with coordinates {}".format(self.type, self.coords)
 
     def get_attribs(self):
         return (self.coords, self.color)
@@ -136,7 +136,7 @@ class GA:
                 self.color == other.color)
 
     def __repr__(self):
-        return f"{self.type} object with coordinates {self.coords}"
+        return "{} object with coordinates {}".format(self.type, self.coords)
 
     def get_attribs(self):
         return (self.coords, self.color)
@@ -164,7 +164,7 @@ class TX:
                 self.color == other.color)
 
     def __repr__(self):
-        return f"{self.type} object with coordinates {self.coords}"
+        return "{} object with coordinates {}".format(self.type, self.coords)
 
     def get_attribs(self):
         return (self.coords, self.text, self.style, self.size, self.color)
@@ -190,7 +190,7 @@ class DL:
                 self.color == other.color)
 
     def __repr__(self):
-        return f"{self.type} object with coordinates {self.coords}"
+        return "{} object with coordinates {}".format(self.type, self.coords)
 
     def get_attribs(self):
         return (self.coords, self.color)
