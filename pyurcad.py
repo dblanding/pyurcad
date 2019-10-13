@@ -1,9 +1,9 @@
 """
 Rewrite (started on 10/9/19) of cadvas using the framework from
 'Tkinter GUI Application Development Blueprints, 2nd Edition' by
-Bhaskar Chaudhary. Cadvas used John Grayson's Appshell, based on
-Python Mega Widgets. PyurCad = Pure CAD in the sense that it uses
-only the standard libraries that come with Python 3.7.
+Bhaskar Chaudhary. (Cadvas used John Grayson's Appshell, based on
+Python Mega Widgets.) PyurCad = Pure CAD in the sense that it uses
+only the standard libraries that come with Python3.
 Just launch this file. It's as simple as that.
 """
 
@@ -621,7 +621,7 @@ class PyurCad(framework.Framework):
 
     def regen(self, event=None):
         self.regen_all_cl()
-        #self.regen_all_dims()
+        self.regen_all_dims()
         self.regen_all_text()
 
     def set_units(self, units):
@@ -692,6 +692,17 @@ class PyurCad(framework.Framework):
             self.calculator = tkrpncalc.Calculator(self.root)
             self.calculator.grab_set()
             self.calculator.geometry('+800+50')
+
+    def on_close_menu_clicked(self):
+        self.close_window()
+
+    def close_window(self):
+        if messagebox.askokcancel("Quit", "Do you really want to quit?"):
+            self.root.destroy()
+
+    def on_about_menu_clicked(self, event=None):
+        messagebox.showinfo(
+            "About", "PYurCAD (pureCAD)\n Doug Blanding\n dblanding@gmail.com")
 
     #=======================================================================
     # Debug Tools
@@ -2696,32 +2707,7 @@ class PyurCad(framework.Framework):
         self.root.bind("<Control-B1-ButtonRelease>", self.regen_all_cl)
         #self.root.bind("<Control-B3-ButtonRelease>", self.regen)
 
-
-    ###   Misc stuff from Chaudhary book  #########################
-
-
-    def on_close_menu_clicked(self):
-        self.close_window()
-
-    def close_window(self):
-        if messagebox.askokcancel("Quit", "Do you really want to quit?"):
-            self.root.destroy()
-
-    def on_about_menu_clicked(self, event=None):
-        messagebox.showinfo(
-            "About", "PYurCAD (pureCAD)\n Doug Blanding\n dblanding@gmail.com")
-
-    ###   GUI  #######################################################
-
-    def create_tool_bar_buttons(self):
-        for index, name in enumerate(self.tool_bar_functions):
-            icon = tk.PhotoImage(file='icons/' + name + '.gif')
-            self.button = tk.Button(
-                self.tool_bar, image=icon,
-                command=lambda index=index: self.on_tool_bar_button_clicked(index))
-            self.button.grid(
-                row=index // 3, column=1 + index % 3, sticky='nsew')
-            self.button.image = icon
+    ###   GUI  #########################################################
 
     def __init__(self, root):
         super().__init__(root)
@@ -2782,7 +2768,7 @@ class PyurCad(framework.Framework):
         self.dimmenu.add_command(label="Dim Vertical",
                                  command=lambda k="dim_v":self.dispatch(k))
         self.dimmenu.add_command(label="Dim Parallel",
-                                 command=lambda k="dim_p":self.dispatch(k))
+                                 command=lambda k="dim_par":self.dispatch(k))
         self.menubar.add_cascade(label="Dimensions", menu=self.dimmenu)
 
         self.textmenu = tk.Menu(self.menubar, tearoff=1)
@@ -2827,12 +2813,30 @@ class PyurCad(framework.Framework):
         self.create_top_bar()
         self.bar.pack(fill="x", side="top")
 
+    def create_tool_bar(self):
+        self.tool_bar = tk.Frame(self.root, relief="raised", width=50)
+        self.tool_bar.pack(fill="y", side="left", pady=3)
+
+    def create_tool_bar_buttons(self):
+        for index, name in enumerate(self.tool_bar_functions):
+            icon = tk.PhotoImage(file='icons/' + name + '.gif')
+            self.button = tk.Button(
+                self.tool_bar, image=icon,
+                command=lambda index=index: self.on_tool_bar_button_clicked(index))
+            self.button.grid(
+                row=index // 3, column=1 + index % 3, sticky='nsew')
+            self.button.image = icon
+
     def create_status_bar(self):
         self.status_bar = tk.Frame(self.bar)
         self.create_units_display()
         self.create_entry_widget()
         self.create_message_widget()
         self.status_bar.pack(side="right")
+
+    def create_top_bar(self):
+        self.top_bar = tk.Frame(self.bar)
+        self.top_bar.pack(side="left", pady=2)
 
     def create_units_display(self):
         self.unitsDisplay = tk.Label(self.status_bar, text='Units: mm')
@@ -2847,14 +2851,6 @@ class PyurCad(framework.Framework):
     def create_message_widget(self):
         self.message = tk.Label(self.status_bar, text=self.msg)
         self.message.pack(side="right")
-
-    def create_top_bar(self):
-        self.top_bar = tk.Frame(self.bar)
-        self.top_bar.pack(side="left", pady=2)
-
-    def create_tool_bar(self):
-        self.tool_bar = tk.Frame(self.root, relief="raised", width=50)
-        self.tool_bar.pack(fill="y", side="left", pady=3)
 
     def create_drawing_canvas(self):
         self.canvas_frame = tk.Frame(self.root, width=1200, height=900)
@@ -2902,5 +2898,5 @@ def __initializeTk_unix(root):
 if __name__ == '__main__':
     root = tk.Tk()
     initializeTk(root)
-    app = PyurCad(root)
+    PyurCad(root)
     root.mainloop()
