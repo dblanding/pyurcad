@@ -2702,8 +2702,8 @@ class PyurCad(framework.Framework):
         self.canvas.bind("<Button-3>", self.rgtClick)
         self.root.bind("<Key>", self.setCC)
         self.root.bind("<KeyRelease>", self.setCC)
-        self.canvas.bind("<Control-B1-ButtonRelease>", self.regen_all_cl)
-        self.canvas.bind("<Control-B3-ButtonRelease>", self.regen)
+        self.root.bind("<Control-B1-ButtonRelease>", self.regen_all_cl)
+        self.root.bind("<Control-B3-ButtonRelease>", self.regen)
         self.root.bind("<Control-z>", self.undo)
         self.root.bind("<Control-y>", self.redo)
 
