@@ -1,9 +1,9 @@
 """
-Rewrite (started on 10/9/19) of cadvas using the framework from
+Rewrite of cadvas using a couple methods from the framework in
 'Tkinter GUI Application Development Blueprints, 2nd Edition' by
-Bhaskar Chaudhary. (Cadvas used John Grayson's Appshell, based on
-Python Mega Widgets.) PyurCad = Pure CAD in the sense that it uses
-only the standard libraries that come with Python3.
+Bhaskar Chaudhary.
+PyurCad = Pure CAD in the sense that it uses only Python3 and the
+standard libraries that come with it.
 Just launch this file. It's as simple as that.
 """
 
@@ -17,7 +17,6 @@ from tkinter import colorchooser
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
-import framework
 from zooming import Zooming
 import tkrpncalc
 import txtdialog
@@ -354,7 +353,7 @@ def rotate_pt(pt, ang, ctr):
     return add_pt((u, v), ctr)
     
 
-class PyurCad(framework.Framework):
+class PyurCad(tk.Tk):  # root = self
 
     start_x, start_y = 0, 0
     end_x, end_y = 0, 0
@@ -698,7 +697,7 @@ class PyurCad(framework.Framework):
 
     def close_window(self):
         if messagebox.askokcancel("Quit", "Do you really want to quit?"):
-            self.root.destroy()
+            self.destroy()
 
     def on_about_menu_clicked(self, event=None):
         messagebox.showinfo(
@@ -741,7 +740,7 @@ class PyurCad(framework.Framework):
         self.end()
 
     def show_dir_root(self):
-        pprint.pprint(dir(self.root))
+        pprint.pprint(dir(self))
         self.end()
 
     #=======================================================================
@@ -2700,19 +2699,19 @@ class PyurCad(framework.Framework):
         self.canvas.bind("<Button-1>", self.lftClick)
         self.canvas.bind("<Button-2>", self.midClick)
         self.canvas.bind("<Button-3>", self.rgtClick)
-        self.root.bind("<Key>", self.setCC)
-        self.root.bind("<KeyRelease>", self.setCC)
-        self.root.bind("<Control-B1-ButtonRelease>", self.regen_all_cl)
-        self.root.bind("<Control-B3-ButtonRelease>", self.regen)
-        self.root.bind("<Control-z>", self.undo)
-        self.root.bind("<Control-y>", self.redo)
+        self.bind("<Key>", self.setCC)
+        self.bind("<KeyRelease>", self.setCC)
+        self.bind("<Control-B1-ButtonRelease>", self.regen_all_cl)
+        self.bind("<Control-B3-ButtonRelease>", self.regen)
+        self.bind("<Control-z>", self.undo)
+        self.bind("<Control-y>", self.redo)
 
     ###   GUI  #########################################################
 
-    def __init__(self, root):
-        super().__init__(root)
+    def __init__(self):
+        super().__init__()
         self.create_gui()
-        self.root.title("PYurCAD")
+        self.title("PYurCAD")
 
     def create_gui(self):
         self.create_menu()
@@ -2724,7 +2723,7 @@ class PyurCad(framework.Framework):
         self.show_selected_tool_icon_in_top_bar("noop")
         
     def create_menu(self):
-        self.menubar = tk.Menu(self.root)
+        self.menubar = tk.Menu(self)
         self.filemenu = tk.Menu(self.menubar, tearoff=1)
         self.filemenu.add_command(label="Print", command=self.printps)
         self.filemenu.add_command(label="Open", command=self.fileOpen)
@@ -2798,23 +2797,23 @@ class PyurCad(framework.Framework):
                                    command=lambda k="show_calc":self.dispatch(k))
         self.debugmenu.add_command(label="show dir(self)",
                                    command=lambda k="show_dir_self":self.dispatch(k))
-        self.debugmenu.add_command(label="show dir(self.root)",
+        self.debugmenu.add_command(label="show dir(self)",
                                    command=lambda k="show_dir_root":self.dispatch(k))
         self.menubar.add_cascade(label="Debug", menu=self.debugmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
         self.helpmenu.add_command(label="About", command=self.on_about_menu_clicked)
         self.menubar.add_cascade(label="Help", menu=self.helpmenu)
-        self.root.config(menu=self.menubar)
+        self.config(menu=self.menubar)
 
     def create_bar(self):
-        self.bar = tk.Frame(self.root, height=15, relief="raised")
+        self.bar = tk.Frame(self, height=15, relief="raised")
         self.create_status_bar()
         self.create_top_bar()
         self.bar.pack(fill="x", side="top")
 
     def create_tool_bar(self):
-        self.tool_bar = tk.Frame(self.root, relief="raised", width=50)
+        self.tool_bar = tk.Frame(self, relief="raised", width=50)
         self.tool_bar.pack(fill="y", side="left", pady=3)
 
     def create_tool_bar_buttons(self):
@@ -2853,7 +2852,7 @@ class PyurCad(framework.Framework):
         self.message.pack(side="right")
 
     def create_drawing_canvas(self):
-        self.canvas_frame = tk.Frame(self.root, width=1200, height=900)
+        self.canvas_frame = tk.Frame(self, width=1200, height=900)
         self.canvas_frame.pack(side="right", expand="yes", fill="both")
         self.canvas = Zooming(self.canvas_frame, background="black",
                               width=800, height=500)
@@ -2862,7 +2861,35 @@ class PyurCad(framework.Framework):
         self.canvas.move_can(60,420)    # Put 0,0 near lower left corner
 
     def bind_menu_accelrator_keys(self):
-        self.root.bind('<KeyPress-F1>', self.on_about_menu_clicked)
+        self.bind('<KeyPress-F1>', self.on_about_menu_clicked)
+
+    menu_items = None
+
+
+    def build_menu(self, menu_definitions):
+        menu_bar = tk.Menu(self)
+        for definition in menu_definitions:
+            menu = tk.Menu(menu_bar, tearoff=0)
+            top_level_menu, pull_down_menus = definition.split('-')
+            menu_items = map(str.strip, pull_down_menus.split(','))
+            for item in menu_items:
+                self._add_menu_command(menu, item)
+            menu_bar.add_cascade(label=top_level_menu, menu=menu)
+        self.config(menu=menu_bar)
+
+    def _add_menu_command(self, menu, item):
+        if item == 'sep':
+            menu.add_separator()
+        else:
+            menu_label, accelrator_key, command_callback = item.split('/')
+            try:
+                underline = menu_label.index('&')
+                menu_label = menu_label.replace('&', '', 1)
+            except ValueError:
+                underline = None
+            menu.add_command(label=menu_label, underline=underline,
+                             accelerator=accelrator_key, command=eval(command_callback))
+
 
 def initializeTk(root):
     # Initialize platform-specific options
@@ -2896,7 +2923,6 @@ def __initializeTk_unix(root):
     __initializeTk_colors_common(root)
 
 if __name__ == '__main__':
-    root = tk.Tk()
-    initializeTk(root)
-    PyurCad(root)
-    root.mainloop()
+
+    app = PyurCad()
+    app.mainloop()
