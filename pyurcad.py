@@ -689,7 +689,7 @@ class PyurCad(framework.Framework):
 
     def launch_calc(self):
         if not self.calculator:
-            self.calculator = tkrpncalc.Calculator(self.root)
+            self.calculator = tkrpncalc.Calculator(self)
             self.calculator.grab_set()
             self.calculator.geometry('+800+50')
 
@@ -2696,16 +2696,16 @@ class PyurCad(framework.Framework):
     def bindings(self):
         self.canvas.panbindings()
         self.canvas.zoombindings()
-        self.root.bind("<Motion>", self.mouseMove)
-        self.root.bind("<Button-1>", self.lftClick)
-        self.root.bind("<Button-2>", self.midClick)
-        self.root.bind("<Button-3>", self.rgtClick)
-        self.root.bind("<Control-z>", self.undo)
-        self.root.bind("<Control-y>", self.redo)
+        self.canvas.bind("<Motion>", self.mouseMove)
+        self.canvas.bind("<Button-1>", self.lftClick)
+        self.canvas.bind("<Button-2>", self.midClick)
+        self.canvas.bind("<Button-3>", self.rgtClick)
         self.root.bind("<Key>", self.setCC)
         self.root.bind("<KeyRelease>", self.setCC)
-        self.root.bind("<Control-B1-ButtonRelease>", self.regen_all_cl)
-        #self.root.bind("<Control-B3-ButtonRelease>", self.regen)
+        self.canvas.bind("<Control-B1-ButtonRelease>", self.regen_all_cl)
+        self.canvas.bind("<Control-B3-ButtonRelease>", self.regen)
+        self.root.bind("<Control-z>", self.undo)
+        self.root.bind("<Control-y>", self.redo)
 
     ###   GUI  #########################################################
 
