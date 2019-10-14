@@ -133,10 +133,7 @@ def circ_circ_inters(x1, y1, r1, x2, y2, r2):
     D = (x2-x1)**2 + (y2-y1)**2
     if not D:
         return pts  # circles have same cntr; no intersection
-    try:
-        q = math.sqrt(abs(((r1+r2)**2-D)*(D-(r2-r1)**2)))
-    except:
-        return pts  # circles don't interect
+    q = math.sqrt(abs(((r1+r2)**2-D)*(D-(r2-r1)**2)))
     pts = [((x2+x1)/2+(x2-x1)*(r1**2-r2**2)/(2*D)+(y2-y1)*q/(2*D),
             (y2+y1)/2+(y2-y1)*(r1**2-r2**2)/(2*D)-(x2-x1)*q/(2*D)),
            ((x2+x1)/2+(x2-x1)*(r1**2-r2**2)/(2*D)-(y2-y1)*q/(2*D),
