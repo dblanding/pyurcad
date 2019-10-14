@@ -1860,7 +1860,7 @@ class PyurCad(tk.Tk):  # root = self
         This needs to be done after zoom because the dimension text does
         not change size with zoom."""
 
-        dimlist = [v for v in self.curr.values() if v.type is 'dl']
+        dimlist = [v for v in self.curr.values() if v.type == 'dl']
         self.del_all_d()
         for ent_obj in dimlist:
             self.dim_gen(ent_obj)
@@ -2742,7 +2742,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def create_gui(self):
         self.create_menu()
-        self.create_bar()
+        self.create_bar_frame()
         self.create_tool_bar()
         self.create_tool_bar_buttons()
         self.create_drawing_canvas()
@@ -2833,11 +2833,11 @@ class PyurCad(tk.Tk):  # root = self
         self.menubar.add_cascade(label="Help", menu=self.helpmenu)
         self.config(menu=self.menubar)
 
-    def create_bar(self):
-        self.bar = tk.Frame(self, height=15, relief="raised")
+    def create_bar_frame(self):
+        self.bar_frame = tk.Frame(self, height=15, relief="raised")
         self.create_status_bar()
         self.create_top_bar()
-        self.bar.pack(fill="x", side="top")
+        self.bar_frame.pack(fill="x", side="top")
 
     def create_tool_bar(self):
         self.tool_bar = tk.Frame(self, relief="raised", width=50)
@@ -2854,14 +2854,14 @@ class PyurCad(tk.Tk):  # root = self
             self.button.image = icon
 
     def create_status_bar(self):
-        self.status_bar = tk.Frame(self.bar)
+        self.status_bar = tk.Frame(self.bar_frame)
         self.create_units_display()
         self.create_entry_widget()
         self.create_message_widget()
         self.status_bar.pack(side="right")
 
     def create_top_bar(self):
-        self.top_bar = tk.Frame(self.bar)
+        self.top_bar = tk.Frame(self.bar_frame)
         self.top_bar.pack(side="left", pady=2)
 
     def create_units_display(self):
