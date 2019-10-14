@@ -472,7 +472,7 @@ class PyurCad(tk.Tk):  # root = self
     calculator = None
     txtdialog = None
     popup = None
-    msg = "Left-Click a tool button to start.  Middle-Click on screen to stop."
+    msg = "Left-Click a tool button to start.  Middle-Click on screen to end."
 
     # =======================================================================
     # Functions for converting between canvas CS and engineering CS
@@ -713,7 +713,7 @@ class PyurCad(tk.Tk):  # root = self
     def launch_calc(self):
         if not self.calculator:
             self.calculator = tkrpncalc.Calculator(self)
-            self.calculator.grab_set()
+            #self.calculator.grab_set()
             self.calculator.geometry('+800+50')
 
     def on_close_menu_clicked(self):
@@ -763,8 +763,8 @@ class PyurCad(tk.Tk):  # root = self
         pprint.pprint(dir(self))
         self.end()
 
-    def show_dir_root(self):
-        pprint.pprint(dir(self))
+    def show_op(self):
+        print(self.op)
         self.end()
 
     # =======================================================================
@@ -2336,8 +2336,9 @@ class PyurCad(tk.Tk):  # root = self
         pass
 
     def on_tool_bar_button_clicked(self, button_index):
+        self.end()
         self.update_tool_bar_button_on_top_bar(button_index)
-        if self.selected_tool_bar_function == "noop":
+        if button_index == 0:
             self.op = ''
             self.update_message_bar(self.msg)
         else:
@@ -2381,7 +2382,6 @@ class PyurCad(tk.Tk):  # root = self
 
     def dispatch(self, key):
         """Dispatch commands initiated by menubar & toolbar buttons."""
-        self.end()
         self.set_sel_mode('pnt')
         self.op = key
         if self.op:
@@ -2428,6 +2428,8 @@ class PyurCad(tk.Tk):  # root = self
         self.quit_popup()
         self.save_delta()
         self.update_message_bar('CTRL-LMB to pan.  CTRL-RMB to zoom.')
+        # print("running 'end()'")
+        # print("Selected function: {}".format(self.selected_tool_bar_function))
 
     def enterfloat(self, str_value):
         """Receive string value (from calculator) and do the right thing."""
@@ -2821,8 +2823,8 @@ class PyurCad(tk.Tk):  # root = self
                                    command=lambda k="show_calc": self.dispatch(k))
         self.debugmenu.add_command(label="show dir(self)",
                                    command=lambda k="show_dir_self": self.dispatch(k))
-        self.debugmenu.add_command(label="show dir(self)",
-                                   command=lambda k="show_dir_root": self.dispatch(k))
+        self.debugmenu.add_command(label="show self.op",
+                                   command=lambda k="show_op": self.dispatch(k))
         self.menubar.add_cascade(label="Debug", menu=self.debugmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
