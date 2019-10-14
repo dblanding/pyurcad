@@ -1,10 +1,7 @@
 """
-Rewrite of cadvas using a couple methods from the framework in
-'Tkinter GUI Application Development Blueprints, 2nd Edition' by
-Bhaskar Chaudhary.
-PyurCad = Pure CAD in the sense that it uses only Python3 and the
-standard libraries that come with it.
-Just launch this file. It's as simple as that.
+PyurCad = Pure CAD in the sense that it uses only Python3 and the standard
+libraries that come with it. It is a rewrite of cadvas without the use of
+Python MegaWidgets.
 """
 
 import math
@@ -393,10 +390,7 @@ class PyurCad(tk.Tk):  # root = self
                                'join': "Join 2 Lines",
                                'fillet': "Fillet 2 Adjacent Lines",
                                'translate': "Translate Geometry",
-                               'rotate': "Rotate Geometry",
-                               'text': "Text",
-                               'duplicate_item': "Copy Text",
-                               'drag_item': "Move Text"}
+                               'rotate': "Rotate Geometry"}
 
     tool_bar_functions = ('noop', 'hvcl', 'hcl',
                           'vcl', 'acl', 'clrefang',
@@ -406,8 +400,7 @@ class PyurCad(tk.Tk):  # root = self
                           'line', 'poly', 'rect',
                           'circ', 'arcc2p', 'arc3p',
                           'slot', 'split', 'join',
-                          'fillet', 'translate', 'rotate',
-                          'text', 'duplicate_item', 'drag_item')
+                          'fillet', 'translate', 'rotate')
 
     selected_tool_bar_function = tool_bar_functions[0]
 
@@ -2863,9 +2856,6 @@ class PyurCad(tk.Tk):  # root = self
     def bind_menu_accelrator_keys(self):
         self.bind('<KeyPress-F1>', self.on_about_menu_clicked)
 
-    menu_items = None
-
-
     def build_menu(self, menu_definitions):
         menu_bar = tk.Menu(self)
         for definition in menu_definitions:
@@ -2889,38 +2879,6 @@ class PyurCad(tk.Tk):  # root = self
                 underline = None
             menu.add_command(label=menu_label, underline=underline,
                              accelerator=accelrator_key, command=eval(command_callback))
-
-
-def initializeTk(root):
-    # Initialize platform-specific options
-    if sys.platform == 'mac':
-        __initializeTk_mac(root)
-    elif sys.platform == 'win32':
-        __initializeTk_win32(root)
-    else:
-        __initializeTk_unix(root)
-
-def __initializeTk_colors_common(root):
-    root.option_add('*background', 'grey85')
-    root.option_add('*foreground', 'black')
-    root.option_add('*EntryField.Entry.background', 'white')
-    root.option_add('*Entry.background', 'white')
-    root.option_add('*MessageBar.Entry.background', 'gray85')
-    root.option_add('*Listbox*background', 'white')
-    root.option_add('*Listbox*selectBackground', 'dark slate blue')
-    root.option_add('*Listbox*selectForeground', 'white')
-
-def __initializeTk_win32(root):
-    __initializeTk_colors_common(root)
-    #root.option_add('*Font', 'Verdana 10 bold') # bloats calculator (Win)
-    root.option_add('*EntryField.Entry.Font', 'Courier 10')
-    root.option_add('*Listbox*Font', 'Courier 10')
-
-def __initializeTk_mac(root):
-    __initializeTk_colors_common(root)
-
-def __initializeTk_unix(root):
-    __initializeTk_colors_common(root)
 
 if __name__ == '__main__':
 
