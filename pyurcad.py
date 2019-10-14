@@ -329,7 +329,7 @@ def line_tan_to_2circs(circ1, circ2):
     f = (r2/r1-1)/d  # reciprocal dist from c1 to intersection of loc & tan line
     theta = math.asin(r1*f)    # angle between loc and tangent line
     ang1 = (ang_loc + math.pi/2 - theta)
-    ang2 = (ang_loc - math.pi/2 + theta)
+    # ang2 = (ang_loc - math.pi/2 + theta)  # unused
     p1 = (c1[0]+(r1*math.cos(ang1)), c1[1]+(r1*math.sin(ang1)))
     p2 = (c2[0]+(r2*math.cos(ang1)), c2[1]+(r2*math.sin(ang1)))
     return (p1, p2)
@@ -1206,9 +1206,9 @@ class PyurCad(tk.Tk):  # root = self
                 p3 = self.cp2ep(p3)
                 p2 = self.pt_stack[1]
                 p1 = self.pt_stack[0]
-                tuple = cr_from_3p(p1, p2, p3)
-                if tuple:
-                    pc, r = tuple
+                tup = cr_from_3p(p1, p2, p3)
+                if tup:
+                    pc, r = tup
                     self.circ_builder((pc, r,), rubber=1)
         elif len(self.pt_stack) == 3:
             p3 = self.pt_stack.pop()
@@ -2462,13 +2462,13 @@ class PyurCad(tk.Tk):  # root = self
             if self.text_entry_enable:
                 self.text = text
             else:
-                list = text.split(',')
-                if len(list) == 1:
-                    val = list[0]
+                tlist = text.split(',')
+                if len(tlist) == 1:
+                    val = tlist[0]
                     self.float_stack.append(float(val))
-                elif len(list) == 2 and self.sel_mode == 'pnt':
+                elif len(tlist) == 2 and self.sel_mode == 'pnt':
                     # user entered points are already in ECS units
-                    x, y = list
+                    x, y = tlist
                     x = float(x) * self.unitscale
                     y = float(y) * self.unitscale
                     self.pt_stack.append((x, y))
