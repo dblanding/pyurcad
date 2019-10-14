@@ -5,19 +5,16 @@ Python MegaWidgets.
 """
 
 import math
-import pickle
 import os
+import pickle
+import pprint
 import tkinter as tk
-from tkinter.filedialog import *
-from tkinter import colorchooser
-from tkinter import ttk
-from tkinter import messagebox
 from tkinter import filedialog
-from zooming import Zooming
+from tkinter import messagebox
+import entities
 import tkrpncalc
 import txtdialog
-import entities
-import pprint
+from zooming import Zooming
 
 GEOMCOLOR = 'white'     # color of geometry entities
 CONSTRCOLOR = 'magenta'  # color of construction entities
@@ -501,7 +498,7 @@ class PyurCad(tk.Tk):  # root = self
         openfile = None
         ftypes = [('PostScript file', '*.ps'),
                   ('All files', '*')]
-        openfile = asksaveasfilename(filetypes=ftypes)
+        openfile = filedialog.asksaveasfilename(filetypes=ftypes)
         if openfile:
             outfile = os.path.abspath(openfile)
             self.ipostscript(outfile)
@@ -518,8 +515,8 @@ class PyurCad(tk.Tk):  # root = self
         openfile = None
         ftypes = [('CADvas dwg', '*.pkl'),
                   ('All files', '*')]
-        openfile = askopenfilename(filetypes=ftypes,
-                                   defaultextension='.pkl')
+        openfile = filedialog.askopenfilename(filetypes=ftypes,
+                                              defaultextension='.pkl')
         if openfile:
             infile = os.path.abspath(openfile)
             self.load(infile)
@@ -528,8 +525,8 @@ class PyurCad(tk.Tk):  # root = self
         openfile = None
         ftypes = [('DXF format', '*.dxf'),
                   ('All files', '*')]
-        openfile = askopenfilename(filetypes=ftypes,
-                                   defaultextension='.dxf')
+        openfile = filedialog.askopenfilename(filetypes=ftypes,
+                                              defaultextension='.dxf')
         if openfile:
             infile = os.path.abspath(openfile)
             self.load(infile)
@@ -545,8 +542,8 @@ class PyurCad(tk.Tk):  # root = self
     def fileSaveas(self):
         ftypes = [('CADvas dwg', '*.pkl'),
                   ('All files', '*')]
-        openfile = asksaveasfilename(filetypes=ftypes,
-                                     defaultextension='.pkl')
+        openfile = filedialog.asksaveasfilename(filetypes=ftypes,
+                                                defaultextension='.pkl')
         if openfile:
             self.filename = openfile
             outfile = os.path.abspath(openfile)
@@ -555,8 +552,8 @@ class PyurCad(tk.Tk):  # root = self
     def fileExport(self):
         ftypes = [('DXF format', '*.dxf'),
                   ('All files', '*')]
-        openfile = asksaveasfilename(filetypes=ftypes,
-                                     defaultextension='.dxf')
+        openfile = filedialog.asksaveasfilename(filetypes=ftypes,
+                                                defaultextension='.dxf')
         if openfile:
             outfile = os.path.abspath(openfile)
             self.save(outfile)
