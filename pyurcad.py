@@ -2638,22 +2638,20 @@ class PyurCad(tk.Tk):  # root = self
                         caught = pt
                 if caught:
                     return caught
-                else:
-                    ip = line_circ_inters(xc, yc, x, y, xc, yc, r)
-                    for pt in ip:
-                        if p2p_dist(pt, (x, y)) < cr:
-                            return pt
+                ip = line_circ_inters(xc, yc, x, y, xc, yc, r)
+                for pt in ip:
+                    if p2p_dist(pt, (x, y)) < cr:
+                        return pt
             elif self.canvas.type(item) == 'oval':
                 x0, y0, x1, y1 = self.canvas.coords(item)
                 xc, yc = ctr = midpoint((x0, y0), (x1, y1))
                 r = (x1-x0)/2
                 if self.catchCntr:
                     return (xc, yc)
-                else:
-                    inters_pts = line_circ_inters(xc, yc, x, y, xc, yc, r)
-                    for pt in inters_pts:
-                        if p2p_dist(pt, (x, y)) < cr:
-                            return (pt[0], pt[1])
+                inters_pts = line_circ_inters(xc, yc, x, y, xc, yc, r)
+                for pt in inters_pts:
+                    if p2p_dist(pt, (x, y)) < cr:
+                        return (pt[0], pt[1])
             elif self.canvas.type(item) == 'line':
                 x0, y0, x1, y1 = self.canvas.coords(item)  # end pnts
                 xm, ym = midpoint((x0, y0), (x1, y1))   # mid point
@@ -2666,11 +2664,10 @@ class PyurCad(tk.Tk):  # root = self
                         caught = pt
                 if caught:
                     return caught
-                else:
-                    line = cnvrt_2pts_to_coef((x0, y0), (x1, y1))
-                    u, v = proj_pt_on_line(line, (x, y))
-                    if x0 < u < x1 or x0 > u > x1 or y0 < v < y1 or y0 > v > y1:
-                        return (u, v)
+                line = cnvrt_2pts_to_coef((x0, y0), (x1, y1))
+                u, v = proj_pt_on_line(line, (x, y))
+                if x0 < u < x1 or x0 > u > x1 or y0 < v < y1 or y0 > v > y1:
+                    return (u, v)
 
         elif len(items) > 1:  # intersection found
             if self.canvas.type(items[0]) == 'line' and\
@@ -2686,8 +2683,7 @@ class PyurCad(tk.Tk):  # root = self
                 if not ip:
                     items.pop(0)
                     return self.find_catch_pt(items, x, y)
-                elif ip:
-                    return ip
+                return ip
             elif self.canvas.type(items[0]) in ('oval', 'arc') and\
                  self.canvas.type(items[1]) in ('oval', 'arc'):
                 a, b, c, d = self.canvas.coords(items[0])
