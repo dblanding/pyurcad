@@ -7,9 +7,8 @@ Python MegaWidgets.
 import math
 import pickle
 import os
-import sys
 import tkinter as tk
-from   tkinter.filedialog import *
+from tkinter.filedialog import *
 from tkinter import colorchooser
 from tkinter import ttk
 from tkinter import messagebox
@@ -21,21 +20,22 @@ import entities
 import pprint
 
 GEOMCOLOR = 'white'     # color of geometry entities
-CONSTRCOLOR = 'magenta' # color of construction entities
+CONSTRCOLOR = 'magenta'  # color of construction entities
 TEXTCOLOR = 'cyan'      # color of text entities
 DIMCOLOR = 'red'        # color of dimension entities
 RUBBERCOLOR = 'yellow'  # color of (temporary) rubber elements
 
-#===========================================================================
-# 
+# ===========================================================================
+#
 # Math & geometry utility functions
-# 
-#===========================================================================
+#
+# ===========================================================================
+
 
 def intersection(cline1, cline2):
     """Return intersection (x,y) of 2 clines expressed as (a,b,c) coeff."""
-    a,b,c = cline1
-    d,e,f = cline2
+    a, b, c = cline1
+    d, e, f = cline2
     i = b*f-c*e
     j = c*d-a*f
     k = a*e-b*d
@@ -43,6 +43,7 @@ def intersection(cline1, cline2):
         return (i/k, j/k)
     else:
         return None
+
 
 def cnvrt_2pts_to_coef(pt1, pt2):
     """Return (a,b,c) coefficients of cline defined by 2 (x,y) pts."""
@@ -53,6 +54,7 @@ def cnvrt_2pts_to_coef(pt1, pt2):
     c = x2*y1-x1*y2
     return (a, b, c)
 
+
 def proj_pt_on_line(cline, pt):
     """Return point which is the projection of pt on cline."""
     a, b, c = cline
@@ -60,20 +62,25 @@ def proj_pt_on_line(cline, pt):
     denom = a**2 + b**2
     if not denom:
         return pt
-    xp = (b**2*x - a*b*y -a*c)/denom
-    yp = (a**2*y - a*b*x -b*c)/denom
+    xp = (b**2 * x - a*b*y - a*c) / denom
+    yp = (a**2 * y - a*b*x - b*c) / denom
     return (xp, yp)
+
 
 def pnt_in_box_p(pnt, box):
     '''Point in box predicate: Return True if pnt is in box.'''
     x, y = pnt
     x1, y1, x2, y2 = box
-    if x1<x<x2 and y1<y<y2: return True
-    else: return False
+    if x1 < x < x2 and y1 < y < y2:
+        return True
+    else:
+        return False
+
 
 def midpoint(p1, p2, f=.5):
     """Return point part way (f=.5 by def) between points p1 and p2."""
     return (((p2[0]-p1[0])*f)+p1[0], ((p2[1]-p1[1])*f)+p1[1])
+
 
 def p2p_dist(p1, p2):
     """Return the distance between two points"""
@@ -81,15 +88,19 @@ def p2p_dist(p1, p2):
     u, v = p2
     return math.sqrt((x-u)**2 + (y-v)**2)
 
+
 def p2p_angle(p0, p1):
     """Return angle (degrees) from p0 to p1."""
     return math.atan2(p1[1]-p0[1], p1[0]-p0[0])*180/math.pi
 
+
 def add_pt(p0, p1):
     return (p0[0]+p1[0], p0[1]+p1[1])
 
+
 def sub_pt(p0, p1):
     return (p0[0]-p1[0], p0[1]-p1[1])
+
 
 def line_circ_inters(x1, y1, x2, y2, xc, yc, r):
     '''Return list of intersection pts of line defined by pts x1,y1 and x2,y2
@@ -117,6 +128,7 @@ def line_circ_inters(x1, y1, x2, y2, xc, yc, r):
         intpnts.append(((x1 + u2*(x2-x1)), (y1 + u2*(y2-y1))))
     return intpnts
 
+
 def circ_circ_inters(x1, y1, r1, x2, y2, r2):
     '''Return list of intersection pts of 2 circles.
     Uses algorithm from Robert S. Wilson's web page.'''
@@ -136,12 +148,14 @@ def circ_circ_inters(x1, y1, r1, x2, y2, r2):
         pts.pop()   # circles are tangent
     return pts
 
+
 def same_pt_p(p1, p2):
     '''Return True if p1 and p2 are within 1e-10 of each other.'''
     if p2p_dist(p1, p2) < 1e-6:
         return True
     else:
         return False
+
 
 def cline_box_intrsctn(cline, box):
     """Return tuple of pts where line intersects edges of box."""
@@ -160,12 +174,14 @@ def cline_box_intrsctn(cline, box):
                     pts.append(pt)
     return tuple(pts)
 
+
 def para_line(cline, pt):
     """Return coeff of newline thru pt and parallel to cline."""
     a, b, c = cline
     x, y = pt
     cnew = -(a*x + b*y)
     return (a, b, cnew)
+
 
 def para_lines(cline, d):
     """Return 2 parallel lines straddling line, offset d."""
@@ -175,6 +191,7 @@ def para_lines(cline, d):
     cline2 = (a, b, c - c1)
     return (cline1, cline2)
 
+
 def perp_line(cline, pt):
     """Return coeff of newline thru pt and perpend to cline."""
     a, b, c = cline
@@ -182,19 +199,26 @@ def perp_line(cline, pt):
     cnew = a*y - b*x
     return (b, -a, cnew)
 
+
 def closer(p0, p1, p2):
     """Return closer of p1 or p2 to point p0."""
     d1 = (p1[0] - p0[0])**2 + (p1[1] - p0[1])**2
     d2 = (p2[0] - p0[0])**2 + (p2[1] - p0[1])**2
-    if d1 < d2: return p1
-    else: return p2
+    if d1 < d2:
+        return p1
+    else:
+        return p2
+
 
 def farther(p0, p1, p2):
     """Return farther of p1 or p2 from point p0."""
     d1 = (p1[0] - p0[0])**2 + (p1[1] - p0[1])**2
     d2 = (p2[0] - p0[0])**2 + (p2[1] - p0[1])**2
-    if d1 > d2: return p1
-    else: return p2
+    if d1 > d2:
+        return p1
+    else:
+        return p2
+
 
 def find_fillet_pts(r, commonpt, end1, end2):
     """Return ctr of fillet (radius r) and tangent pts for corner
@@ -207,19 +231,24 @@ def find_fillet_pts(r, commonpt, end1, end2):
     p2b = proj_pt_on_line(cl1b, end2)
     da = p2p_dist(p2a, end2)
     db = p2p_dist(p2b, end2)
-    if da <= db: cl1 = cl1a
-    else: cl1 = cl1b
+    if da <= db:
+        cl1 = cl1a
+    else:
+        cl1 = cl1b
     cl2a, cl2b = para_lines(line2, r)
     p1a = proj_pt_on_line(cl2a, end1)
     p1b = proj_pt_on_line(cl2b, end1)
     da = p2p_dist(p1a, end1)
     db = p2p_dist(p1b, end1)
-    if da <= db: cl2 = cl2a
-    else: cl2 = cl2b
+    if da <= db:
+        cl2 = cl2a
+    else:
+        cl2 = cl2b
     pc = intersection(cl1, cl2)
     p1 = proj_pt_on_line(line1, pc)
     p2 = proj_pt_on_line(line2, pc)
     return (pc, p1, p2)
+
 
 def find_common_pt(apair, bpair):
     """Return (common pt, other pt from a, other pt from b), where a and b
@@ -246,6 +275,7 @@ def find_common_pt(apair, bpair):
         return
     return (cp, opa, opb)
 
+
 def cr_from_3p(p1, p2, p3):
     """Return ctr pt and radius of circle on which 3 pts reside.
     From Paul Bourke's web page."""
@@ -255,8 +285,9 @@ def cr_from_3p(p1, p2, p3):
     radial_line2 = perp_line(chord2, midpoint(p2, p3))
     ctr = intersection(radial_line1, radial_line2)
     if ctr:
-        radius =  p2p_dist(p1, ctr)
+        radius = p2p_dist(p1, ctr)
         return (ctr, radius)
+
 
 def extendline(p0, p1, d):
     """Return point which lies on extension of line segment p0-p1,
@@ -267,6 +298,7 @@ def extendline(p0, p1, d):
     else:
         return
 
+
 def shortenline(p0, p1, d):
     """Return point which lies on line segment p0-p1,
     short of p1 by distance d."""
@@ -275,6 +307,7 @@ def shortenline(p0, p1, d):
         return closer(p0, pts[0], pts[1])
     else:
         return
+
 
 def line_tan_to_circ(circ, p):
     """Return tan pts on circ of line through p."""
@@ -288,6 +321,7 @@ def line_tan_to_circ(circ, p):
     p2 = (c[0]+(r*math.cos(ang2)), c[1]+(r*math.sin(ang2)))
     return (p1, p2)
 
+
 def line_tan_to_2circs(circ1, circ2):
     """Return tangent pts on line tangent to 2 circles.
     Order of circle picks determines which tangent line."""
@@ -295,13 +329,14 @@ def line_tan_to_2circs(circ1, circ2):
     c2, r2 = circ2
     d = p2p_dist(c1, c2)    # distance between centers
     ang_loc = p2p_angle(c2, c1)*math.pi/180  # angle of line of centers
-    f = (r2/r1-1)/d # reciprocal dist from c1 to intersection of loc & tan line
+    f = (r2/r1-1)/d  # reciprocal dist from c1 to intersection of loc & tan line
     theta = math.asin(r1*f)    # angle between loc and tangent line
     ang1 = (ang_loc + math.pi/2 - theta)
     ang2 = (ang_loc - math.pi/2 + theta)
     p1 = (c1[0]+(r1*math.cos(ang1)), c1[1]+(r1*math.sin(ang1)))
     p2 = (c2[0]+(r2*math.cos(ang1)), c2[1]+(r2*math.sin(ang1)))
     return (p1, p2)
+
 
 def angled_cline(pt, angle):
     """Return cline through pt at angle (degrees)"""
@@ -311,6 +346,7 @@ def angled_cline(pt, angle):
     p2 = (pt[0]+dx, pt[1]+dy)
     cline = cnvrt_2pts_to_coef(pt, p2)
     return cline
+
 
 def ang_bisector(p0, p1, p2, f=0.5):
     """Return cline coefficients of line through vertex p0, factor=f
@@ -336,6 +372,7 @@ def pt_on_RHS_p(pt, p0, p1):
         if angline > angpt > angline-180:
             return True
 
+
 def rotate_pt(pt, ang, ctr):
     """Return coordinates of pt rotated ang (deg) CCW about ctr.
 
@@ -348,7 +385,7 @@ def rotate_pt(pt, ang, ctr):
     u = x * math.cos(A) - y * math.sin(A)
     v = y * math.cos(A) + x * math.sin(A)
     return add_pt((u, v), ctr)
-    
+
 
 class PyurCad(tk.Tk):  # root = self
 
@@ -422,11 +459,11 @@ class PyurCad(tk.Tk):  # root = self
     float_stack = []    # float values (unitless)
     pt_stack = []       # points, in ECS (mm) units
     obj_stack = []      # canvas items picked from the screen
-    sel_box_crnr = None # first corner of selection box, if any
+    sel_box_crnr = None  # first corner of selection box, if any
     undo_stack = []     # list of dicts of sets of entities
     redo_stack = []     # data popped off undo_stack
     filename = None     # name of file currently loaded (or saved as)
-    dimgap = 10         # extension line gap (in canvas units) 
+    dimgap = 10         # extension line gap (in canvas units)
     textsize = 10       # default text size
     textstyle = 'Calibri'   # default text style
     TEXTCOLOR = TEXTCOLOR
@@ -443,9 +480,9 @@ class PyurCad(tk.Tk):  # root = self
     popup = None
     msg = "Left-Click a tool button to start.  Middle-Click on screen to stop."
 
-    #=======================================================================
+    # =======================================================================
     # Functions for converting between canvas CS and engineering CS
-    #=======================================================================
+    # =======================================================================
 
     def ep2cp(self, pt):
         """Convert pt from ECS to CCS."""
@@ -456,9 +493,9 @@ class PyurCad(tk.Tk):  # root = self
         x, y = self.canvas.canvas2world(pt[0], pt[1])
         return (x, -y)
 
-    #=======================================================================
+    # =======================================================================
     # File, View, Units and Measure commands
-    #=======================================================================
+    # =======================================================================
 
     def printps(self):
         openfile = None
@@ -548,7 +585,7 @@ class PyurCad(tk.Tk):  # root = self
 
         Data is saved/loaded as a list of dicts, one dict for each
         drawing entity, {key=entity_type: val=entity_attribs} """
-        
+
         fext = os.path.splitext(file)[-1]
         if fext == '.dxf':
             import dxf
@@ -635,7 +672,7 @@ class PyurCad(tk.Tk):  # root = self
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
             dist = p2p_dist(p1, p2)/self.unitscale
-            self.updateMessageBar('%s %s'%(dist, self.units))
+            self.updateMessageBar('%s %s' % (dist, self.units))
             self.launch_calc()
             self.calculator.putx(dist)
 
@@ -696,9 +733,9 @@ class PyurCad(tk.Tk):  # root = self
         messagebox.showinfo(
             "About", "PYurCAD (pureCAD)\n Doug Blanding\n dblanding@gmail.com")
 
-    #=======================================================================
+    # =======================================================================
     # Debug Tools
-    #=======================================================================
+    # =======================================================================
 
     def show_op(self):
         print(self.op)
@@ -714,7 +751,7 @@ class PyurCad(tk.Tk):  # root = self
     def show_undo(self):
         pprint.pprint(self.undo_stack)
         self.end()
-        
+
     def show_redo(self):
         pprint.pprint(self.redo_stack)
         self.end()
@@ -736,14 +773,14 @@ class PyurCad(tk.Tk):  # root = self
         pprint.pprint(dir(self))
         self.end()
 
-    #=======================================================================
+    # =======================================================================
     # Construction
     # construction lines (clines) are "infinite" length lines
     # described by the equation:            ax + by + c = 0
     # they are defined by coefficients:     (a, b, c)
     #
     # circles are defined by coordinates:   (pc, r)
-    #=======================================================================
+    # =======================================================================
 
     def cline_gen(self, cline, rubber=0, regen=False):
         '''Generate clines from coords (a,b,c) in ECS (mm) values.'''
@@ -785,7 +822,7 @@ class PyurCad(tk.Tk):  # root = self
         when zooming out, new clines need to be generated so they extend over
         the full canvas. Also, when zooming in, some clines are completely off
         the canvas, so we need a way to keep them from getting lost."""
-        
+
         cl_keylist = [k for k, v in self.curr.items() if v.type is 'cl']
         for handle in cl_keylist:
             self.canvas.delete(handle)
@@ -850,7 +887,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def acl(self, pnt=None):
         """Create construction line thru a point, at a specified angle."""
-        
+
         if not self.pt_stack:
             message = 'Pick a pt for angled construction line or enter coords'
             message += self.shift_key_advice
@@ -878,7 +915,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def clrefang(self, p3=None):
         """Create a construction line at an angle relative to a reference."""
-        
+
         if not self.pt_stack:
             message = 'Specify a pt for new construction line'
             message += self.shift_key_advice
@@ -905,7 +942,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def abcl(self, pnt=None):
         """Create an angular bisector construction line."""
-        
+
         if not self.float_stack and not self.pt_stack:
             message = 'Enter bisector factor (Default=.5) or specify vertex'
             message += self.shift_key_advice
@@ -939,7 +976,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def lbcl(self, pnt=None):
         """Create a linear bisector construction line."""
-        
+
         if not self.pt_stack and not self.float_stack:
             message = 'Enter bisector factor (Default=.5) or specify first point'
             message += self.shift_key_advice
@@ -978,7 +1015,7 @@ class PyurCad(tk.Tk):  # root = self
 
         1) At a specified offset distance from selected straight element, or
         2) Parallel to a selected straight element through a selected point."""
-        
+
         if not self.obj_stack and not self.float_stack:
             self.updateMessageBar(
                 'Pick a straight element or enter an offset distance')
@@ -995,7 +1032,7 @@ class PyurCad(tk.Tk):  # root = self
                 obj = self.obj_stack.pop()
                 p = self.pt_stack.pop()
                 item = obj[0]
-                baseline = (0,0,0)
+                baseline = (0, 0, 0)
                 if self.canvas.type(item) == 'line':
                     if 'c' in self.canvas.gettags(item):
                         baseline = self.curr[item].coords
@@ -1008,7 +1045,7 @@ class PyurCad(tk.Tk):  # root = self
                 p2 = proj_pt_on_line(cline2, p)
                 d1 = p2p_dist(p1, p)
                 d2 = p2p_dist(p2, p)
-                if d1<d2:
+                if d1 < d2:
                     self.cline_gen(cline1)
                 else:
                     self.cline_gen(cline2)
@@ -1017,7 +1054,7 @@ class PyurCad(tk.Tk):  # root = self
             if not obj:
                 return
             item = obj[0]
-            baseline = (0,0,0)
+            baseline = (0, 0, 0)
             if self.canvas.type(item) == 'line':
                 if 'c' in self.canvas.gettags(item):
                     baseline = self.curr[item].coords
@@ -1032,7 +1069,7 @@ class PyurCad(tk.Tk):  # root = self
                 if pnt:
                     p = self.cp2ep(pnt)
                     parline = para_line(baseline, p)
-                    self.cline_gen(parline, rubber=1) 
+                    self.cline_gen(parline, rubber=1)
             else:
                 p = self.pt_stack.pop()
                 newline = para_line(baseline, p)
@@ -1040,7 +1077,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def perpcl(self, pnt=None):
         """Create a perpendicular cline through a selected point."""
-        
+
         if not self.obj_stack:
             self.updateMessageBar('Pick line to be perpendicular to')
             self.set_sel_mode('items')
@@ -1053,7 +1090,7 @@ class PyurCad(tk.Tk):  # root = self
             if not obj:
                 return
             item = obj[0]
-            baseline = (0,0,0)
+            baseline = (0, 0, 0)
             if self.canvas.type(item) == 'line':
                 if 'c' in self.canvas.gettags(item):
                     baseline = self.curr[item].coords
@@ -1072,7 +1109,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def cltan1(self, p1=None):
         '''Create a construction line through a point, tangent to a circle.'''
-        
+
         if not self.obj_stack:
             self.updateMessageBar('Pick circle')
             self.set_sel_mode('items')
@@ -1094,7 +1131,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def cltan2(self, p1=None):
         '''Create a construction line tangent to 2 circles.'''
-        
+
         if not self.obj_stack:
             self.updateMessageBar('Pick first circle')
             self.set_sel_mode('items')
@@ -1124,13 +1161,13 @@ class PyurCad(tk.Tk):  # root = self
     def ccirc(self, p1=None):
         '''Create a construction circle from center point and
         perimeter point or radius.'''
-        
+
         self.circ(p1=p1, constr=1)
 
     def cccirc(self, p1=None):
         '''Create a construction circle concentric to an existing circle,
         at a "relative" radius.'''
-        
+
         if not self.obj_stack:
             self.set_sel_mode('items')
             self.updateMessageBar('Select existing circle')
@@ -1161,7 +1198,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def cc3p(self, p3=None):
         """Create a constr circle from 3 pts on circle."""
-        
+
         if not self.pt_stack:
             self.updateMessageBar('Pick first point on circle')
         elif len(self.pt_stack) == 1:
@@ -1183,14 +1220,13 @@ class PyurCad(tk.Tk):  # root = self
             pc, r = cr_from_3p(p1, p2, p3)
             self.circ_builder((pc, r), constr=1)
 
-
-    #=======================================================================
+    # =======================================================================
     # Geometry
     # geometry line parameters are stored in GL objects.
     # geometry lines are finite length segments between 2 pts: p1, p2
     # lines are defined by coordinates:         (p1, p2)
     #
-    #=======================================================================
+    # =======================================================================
 
     def line_draw(self, coords, color, arrow=None, tag='g'):
         """Create and display line segment between two pts. Return ID.
@@ -1212,10 +1248,10 @@ class PyurCad(tk.Tk):  # root = self
         coords, color = gl.get_attribs()
         tkid = self.line_draw(coords, color)
         self.curr[tkid] = gl
-        
+
     def line(self, p1=None):
         '''Create line segment between 2 points. Enable 'rubber line' mode'''
-        
+
         rc = RUBBERCOLOR
         if not self.pt_stack:
             message = 'Pick start point of line or enter coords'
@@ -1239,7 +1275,7 @@ class PyurCad(tk.Tk):  # root = self
             x, y = self.ep2cp(p0)   # fixed first point (canvas coords)
             xr, yr = p1             # rubber point (canvas coords)
             x0, y0 = p0             # fixed first point (ECS)
-            x1, y1 = self.cp2ep(p1) # rubber point (ECS)
+            x1, y1 = self.cp2ep(p1)  # rubber point (ECS)
             strcoords = "(%1.3f, %1.3f)" % ((x1-x0)/self.unitscale,
                                             (y1-y0)/self.unitscale)
             if self.rubber:
@@ -1256,7 +1292,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def poly(self, p1=None):
         '''Create chain of line segments, enabling 'rubber line' mode.'''
-        
+
         if not self.pt_stack:
             self.poly_start_pt = None
             message = 'Pick start point or enter coords'
@@ -1272,10 +1308,10 @@ class PyurCad(tk.Tk):  # root = self
                 self.poly_start_pt = self.pt_stack[-1]
             self.line(p1)   # This will generate rubber line
             self.updateMessageBar('Pick next point or enter coords')
-    
+
     def rect(self, p2=None):
         '''Generate a rectangle from 2 diagonally opposite corners.'''
-        
+
         rc = RUBBERCOLOR
         if not self.pt_stack:
             self.updateMessageBar(
@@ -1309,10 +1345,10 @@ class PyurCad(tk.Tk):  # root = self
                 self.canvas.delete(self.rubber)
                 self.rubber = None
 
-    #=======================================================================
+    # =======================================================================
     # geometry circle parameters are stored in GC objects.
     # circles are defined by coordinates:       (pc, r)
-    #=======================================================================
+    # =======================================================================
 
     def circ_draw(self, coords, color, tag):
         """Draw a circle on the canvas and return the tkid handle.
@@ -1339,7 +1375,7 @@ class PyurCad(tk.Tk):  # root = self
         """Create circle at center pc, radius r in engineering (mm) coords.
 
         Handle rubber circles, construction, and geom circles."""
-        
+
         ctr, rad = coords       # ECS
         x, y = self.ep2cp(ctr)
         r = self.canvas.w2c_dx(rad)
@@ -1364,10 +1400,10 @@ class PyurCad(tk.Tk):  # root = self
             if self.rubber:
                 self.canvas.delete(self.rubber)
                 self.rubber = None
-            
+
     def circ(self, p1=None, constr=0):
         '''Create a circle from center pnt and perimeter pnt or radius.'''
-        
+
         finish = 0
         if not self.pt_stack:
             self.updateMessageBar('Pick center of circle or enter coords')
@@ -1390,14 +1426,14 @@ class PyurCad(tk.Tk):  # root = self
         if finish:
             self.circ_builder((pc, r), constr=constr)
 
-    #=======================================================================
+    # =======================================================================
     # geometry arc parameters are stored in GA objects
     # arcs are defined by coordinates:  (pc, r, a0, a1)
     # where:    pc = (x, y) coords of center point
     #           r = radius
     #           a0 = start angle in degrees
     #           a1 = end angle in degrees
-    #=======================================================================
+    # =======================================================================
 
     def garc_gen(self, ga, tag='g'):
         """Create geometry arc from GA object (coords in ECS)
@@ -1410,7 +1446,7 @@ class PyurCad(tk.Tk):  # root = self
         coords, color = ga.get_attribs()
         pc, rad, a0, a1 = coords
         ext = a1-a0
-        if ext<0:
+        if ext < 0:
             ext += 360
         x, y = self.ep2cp(pc)
         r = self.canvas.w2c_dx(rad)
@@ -1435,7 +1471,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def arcc2p(self, p2=None):
         """Create an arc from center pt, start pt and end pt."""
-        
+
         if not self.pt_stack:
             self.updateMessageBar('Specify center of arc')
         elif len(self.pt_stack) == 1:
@@ -1467,7 +1503,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def arc3p(self, p3=None):
         """Create an arc from start pt, end pt, and 3rd pt on the arc."""
-        
+
         if not self.pt_stack:
             self.updateMessageBar('Specify start of arc')
         elif len(self.pt_stack) == 1:
@@ -1504,7 +1540,7 @@ class PyurCad(tk.Tk):  # root = self
             self.garc_gen(e)
             if self.rubber:
                 self.canvas.delete(self.rubber)
-                self.rubber = None 
+                self.rubber = None
 
     def slot(self, p1=None):
         if not self.pt_stack:
@@ -1536,13 +1572,13 @@ class PyurCad(tk.Tk):  # root = self
             self.gline_gen(entities.GL(((p1a, p2a), GEOMCOLOR)))
             self.gline_gen(entities.GL(((p1b, p2b), GEOMCOLOR)))
 
-    #=======================================================================
+    # =======================================================================
     # Modify geometry
-    #=======================================================================
+    # =======================================================================
 
     def split(self, p1=None):
         """Split 1 line segment into 2 (at a selected point.)"""
-        
+
         if not self.obj_stack:
             self.set_sel_mode('items')
             self.updateMessageBar('Pick straight line to split')
@@ -1568,7 +1604,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def join(self, p1=None):
         """Join 2 adjacent line segments into 1. """
-        
+
         if not self.obj_stack:
             self.set_sel_mode('items')
             self.updateMessageBar('Pick first line to join')
@@ -1578,7 +1614,7 @@ class PyurCad(tk.Tk):  # root = self
             item2 = self.obj_stack.pop()[0]
             item1 = self.obj_stack.pop()[0]
             for item in (item1, item2):
-                if not (self.canvas.type(item) == 'line' and \
+                if not (self.canvas.type(item) == 'line' and
                         'g' in self.canvas.gettags(item)):
                     print('Incorrect types of items picked for join')
                     return
@@ -1599,7 +1635,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def fillet(self, p1=None):
         """Create a fillet of radius r at the common corner of 2 lines."""
-        
+
         if not self.obj_stack and not self.float_stack:
             self.updateMessageBar('Enter radius for fillet')
         elif not self.obj_stack:
@@ -1647,7 +1683,7 @@ class PyurCad(tk.Tk):  # root = self
 
         To copy items, enter number of copies.
         Otherwise, item(s) will be moved (not copied)."""
-        
+
         if not self.obj_stack and not self.pt_stack and \
            not self.float_stack:
             self.set_sel_mode('items')
@@ -1710,7 +1746,7 @@ class PyurCad(tk.Tk):  # root = self
 
         To copy items, enter number of copies.
         Otherwise, item(s) will be moved (not copied)."""
-        
+
         if not self.obj_stack and not self.pt_stack and not self.float_stack:
             self.repeat = 0   # No copies. "move" mode is intended.
             self.set_sel_mode('items')
@@ -1763,19 +1799,19 @@ class PyurCad(tk.Tk):  # root = self
                 for handle in handles:
                     self.canvas.delete(handle)
                     del self.curr[handle]
-                
-    #=======================================================================
+
+    # =======================================================================
     # Dimensions
     # linear dimensions have coords:    (p1, p2, p3, d)
     # where p1 and p2 are the points being dimensioned,
     # d is the direction along which the dimension is being measured,
     # represented by the coefficients of a cline: d = (a, b, c)
     # and p3 is the location of the center of the dimension text.
-    #=======================================================================
+    # =======================================================================
 
     def dim_draw(self, dim_obj):
         """Create a linear dimension from dim_obj and return handle.
-        
+
         There are 5 individual components that make up a linear dimension:
         The text, 2 dimension lines, and 2 extension lines. Each component
         shares a tag which is unique to this 'group' of 5 components. This
@@ -1814,11 +1850,10 @@ class PyurCad(tk.Tk):  # root = self
             self.line_draw((p1a, p1c), color=color, tag=('d', dgidtag))
             self.line_draw((p2a, p2c), color=color, tag=('d', dgidtag))
         return dgidtag
-        
 
     def dim_gen(self, dim_obj):
         """Generate dimension from dim_obj and save to self.curr."""
-        
+
         dgid = self.dim_draw(dim_obj)
         self.curr[dgid] = dim_obj
 
@@ -1827,13 +1862,13 @@ class PyurCad(tk.Tk):  # root = self
 
         This needs to be done after zoom because the dimension text does
         not change size with zoom."""
-        
+
         dimlist = [v for v in self.curr.values() if v.type is 'dl']
         self.del_all_d()
         for ent_obj in dimlist:
             self.dim_gen(ent_obj)
 
-    def dim_lin(self, p=None, d=(0,1,0)):
+    def dim_lin(self, p=None, d=(0, 1, 0)):
         """Manually create a linear dimension obj. Add to self.curr."""
 
         rc = RUBBERCOLOR
@@ -1868,17 +1903,17 @@ class PyurCad(tk.Tk):  # root = self
 
     def dim_h(self, p=None):
         """Create a horizontal dimension"""
-        
+
         self.dim_lin(p)
 
     def dim_v(self, p=None):
         """Create a vertical dimension"""
-        
-        self.dim_lin(p, d=(1,0,0))
+
+        self.dim_lin(p, d=(1, 0, 0))
 
     def dim_par(self, p=None):
         """Create a dimension parallel to a selected line element."""
-        
+
         if not self.obj_stack:
             self.set_sel_mode('items')
             self.updateMessageBar(
@@ -1897,13 +1932,13 @@ class PyurCad(tk.Tk):  # root = self
                 if d:
                     self.dim_lin(p, d)
 
-    #=======================================================================
+    # =======================================================================
     # Text
     # Text parameters are stored as attributes of a TX object.
     # attribs = (x,y), text, style, size, color
     # where (x, y) are the coordinates of the center of the text.
     # style, size, color define the font.
-    #=======================================================================
+    # =======================================================================
 
     def text_draw(self, tx, tag='t'):
         """Draw text on canvas and return handle."""
@@ -1932,7 +1967,7 @@ class PyurCad(tk.Tk):  # root = self
 
         This needs to be done after zoom because text size is defined
         in terms of canvas pixels and doesn't change size with zoom."""
-        
+
         tx_list = [tx for tx in self.curr.values() if tx.type == 'tx']
         attribs_list = [tx.get_attribs() for tx in tx_list]
         self.del_all_t()
@@ -1942,7 +1977,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def text_enter(self, p=None):
         """Place new text on drawing."""
-        
+
         rc = RUBBERCOLOR
         if not self.text:
             self.text_entry_enable = 1
@@ -2009,7 +2044,7 @@ class PyurCad(tk.Tk):  # root = self
                 self.rubber = None
                 del self.rubber_tx
             self.regen_all_text()
-            
+
     def txt_params(self, obj=None):
         self.op = 'txt_params'
         if not self.obj_stack and not self.modified_text_object:
@@ -2048,13 +2083,13 @@ class PyurCad(tk.Tk):  # root = self
             self.txtdialog = txtdialog.TxtDialog(self)
             self.txtdialog.geometry('+1000+500')
 
-    #=======================================================================
+    # =======================================================================
     # Delete
-    #=======================================================================
+    # =======================================================================
 
     def del_el(self, item_tuple=None):
         '''Delete individual elements.'''
-        
+
         self.set_sel_mode('items')
         self.allow_list = 1
         self.updateMessageBar('Pick element(s) to delete.')
@@ -2075,20 +2110,20 @@ class PyurCad(tk.Tk):  # root = self
                         for each in dim_items:
                             self.canvas.delete(each)
                         del self.curr[dgid]
-             
+
     def del_all_c(self):
         '''Delete All construction.'''
-        
+
         delete = [k for k, v in self.curr.items() if v.type in ('cl', 'cc')]
         for k in delete:
             del self.curr[k]
         for item in self.canvas.find_withtag('c'):
             self.canvas.delete(item)
         self.cl_list = []
-             
+
     def del_all_g(self):
         '''Delete all geometry.'''
-        
+
         delete = [k for k, v in self.curr.items() if v.type is 'gl']
         for k in delete:
             del self.curr[k]
@@ -2103,7 +2138,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def del_all_d(self):
         '''Delete all dimensions.'''
-        
+
         delete = [k for k, v in self.curr.items() if v.type is 'dl']
         for k in delete:
             del self.curr[k]
@@ -2112,7 +2147,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def del_all_t(self):
         '''Delete all text.'''
-        
+
         delete = [k for k, v in self.curr.items() if v.type is 'tx']
         for k in delete:
             del self.curr[k]
@@ -2121,22 +2156,21 @@ class PyurCad(tk.Tk):  # root = self
 
     def del_all(self):
         '''Delete all.'''
-        
+
         self.curr.clear()
         self.canvas.delete(ALL)
         self.cl_list = []
-        
 
-    #=======================================================================
+    # =======================================================================
     # Undo / Redo
-    #=======================================================================
+    # =======================================================================
 
     """
     When drawing entities are created and displayed, their parameters are
     stored in objects that are specific to their 'type'. The objects which
     encapsulate them each have a .type attribute mirroring the type of the
     entity being encapsulated. The types are as follows:
-    
+
     'cl'    construction line
     'cc'    construction circle
     'gl'    geometry line
@@ -2175,8 +2209,8 @@ class PyurCad(tk.Tk):  # root = self
     1. difference detected between curr and prev.
     2. diff (delta) pushed onto undo_stack.
     3. copy of curr saved to prev.
-    
-    
+
+
     The undo & redo buttons work as shown in the diagram below.
 
      ____________     2      __________ 3       1  ______________
@@ -2233,7 +2267,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def undo(self, event=None):
         """Pop data off undo, push onto redo, update curr, copy to prev."""
-        
+
         self.end()
         if self.undo_stack:
             undo_data = self.undo_stack.pop()
@@ -2278,7 +2312,6 @@ class PyurCad(tk.Tk):  # root = self
             self.dim_gen(entity)
         elif entity.type is 'tx':
             self.text_gen(entity)
-        
 
     def rem_draw(self, entity):
         """Remove entity from current drawing."""
@@ -2295,9 +2328,9 @@ class PyurCad(tk.Tk):  # root = self
     def clear_undo(self):
         self.undo_stack.clear()
 
-    #=======================================================================
+    # =======================================================================
     # Program flow control
-    #=======================================================================
+    # =======================================================================
 
     def execute_selected_method(self):
         self.current_item = None
@@ -2344,7 +2377,9 @@ class PyurCad(tk.Tk):  # root = self
     def updateMessageBar(self, msg):
         self.message.configure(text=msg)
 
-    ###   User Interface methods   ###
+    # =======================================================================
+    # User Interface methods
+    # =======================================================================
 
     def noop(self):
         """Empty method for 'No Operation'"""
@@ -2364,8 +2399,8 @@ class PyurCad(tk.Tk):  # root = self
         '''Set selection mode and cursor style.
         Selection mode should be controlled by current operation
         in order to determine what is returned from screen picks.'''
-        cursordict = {''    :   'top_left_arrow',
-                      'pnt' :   'crosshair',
+        cursordict = {'':       'top_left_arrow',
+                      'pnt':    'crosshair',
                       'items':  'right_ptr',
                       'list':   'right_ptr'}
         if mode in cursordict.keys():
@@ -2374,7 +2409,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def end(self):
         '''End current operation'''
-        
+
         if self.rubber:
             self.canvas.delete(self.rubber)
             self.rubber = None
@@ -2402,7 +2437,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def enterfloat(self, str_value):
         """Receive string value (from calculator) and do the right thing."""
-        
+
         if str_value:
             val = float(str_value)
             self.float_stack.append(val)
@@ -2423,7 +2458,7 @@ class PyurCad(tk.Tk):  # root = self
         how a float value will be used. It remains the responsibility
         of the using function to condition the float value
         appropriately by applying unitscale for distances, etc."""
-        
+
         if self.op:
             text = self.entry.get()
             self.entry.delete(0, len(text))
@@ -2453,7 +2488,7 @@ class PyurCad(tk.Tk):  # root = self
         "catch radius", enter "box select mode" and look for objects that
         lie completely inside box defined by 1st and 2nd clicks.
         '''
-        
+
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         cr = self.catch_radius
@@ -2490,24 +2525,24 @@ class PyurCad(tk.Tk):  # root = self
 
     def rgtClick(self, event):
         '''Popup menu for view options.'''
-        
+
         if self.popup:
             self.popup.destroy()
         self.popup = tk.Toplevel()
         self.popup.overrideredirect(1)
         frame = tk.Frame(self.popup)
         tk.Button(frame, text='View Fit',
-                  command=lambda:(self.view_fit(), self.quitpopup())).pack()
+                  command=lambda: (self.view_fit(), self.quitpopup())).pack()
         if self.allow_list:
             tk.Button(frame, text='Start list',
-                      command=lambda:(self.set_sel_mode('list'),
-                                      self.quitpopup())).pack()
+                      command=lambda: (self.set_sel_mode('list'),
+                                       self.quitpopup())).pack()
             tk.Button(frame, text='End list',
-                      command=lambda:(self.set_sel_mode('items'),
-                                      eval('self.%s()' % self.op),
-                                      self.quitpopup())).pack()
+                      command=lambda: (self.set_sel_mode('items'),
+                                       eval('self.%s()' % self.op),
+                                       self.quitpopup())).pack()
         frame.pack()
-        #size, x, y = tk.winfo_toplevel().winfo_geometry().split('+')
+        # size, x, y = tk.winfo_toplevel().winfo_geometry().split('+')
         x = 100
         y = 100
         if self.allow_list:
@@ -2522,7 +2557,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def genCatchPnt(self, x, y, color='yellow', regen=0):
         '''Generate (or regenerate) a catch point at coordinates x, y.'''
-        
+
         ps = self.catch_pnt_size
         if regen:
             self.canvas.coords(self.catch_pnt, x-ps, y-ps, x+ps, y+ps)
@@ -2533,7 +2568,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def setCC(self, event):
         '''Set center catch flag'''
-        
+
         if event.type == '2' and event.keysym == 'Shift_L':
             self.catchCntr = True
         else:
@@ -2543,10 +2578,10 @@ class PyurCad(tk.Tk):  # root = self
         '''Display a catch point (ID=self.catch_pnt) on a line within
         self.catch_radius of the cursor. Catch point should be "sticky"
         at midpoints, ends and intersections.'''
-        
+
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
-        
+
         if self.sel_mode == 'pnt':
             cr = self.catch_radius
             found = self.canvas.find_overlapping(x-cr, y-cr, x+cr, y+cr)
@@ -2610,7 +2645,7 @@ class PyurCad(tk.Tk):  # root = self
                 else:
                     ip = line_circ_inters(xc, yc, x, y, xc, yc, r)
                     for pt in ip:
-                        if p2p_dist(pt, (x,y)) < cr:
+                        if p2p_dist(pt, (x, y)) < cr:
                             return pt
             elif self.canvas.type(item) == 'oval':
                 x0, y0, x1, y1 = self.canvas.coords(item)
@@ -2621,7 +2656,7 @@ class PyurCad(tk.Tk):  # root = self
                 else:
                     inters_pts = line_circ_inters(xc, yc, x, y, xc, yc, r)
                     for pt in inters_pts:
-                        if p2p_dist(pt, (x,y)) < cr:
+                        if p2p_dist(pt, (x, y)) < cr:
                             return (pt[0], pt[1])
             elif self.canvas.type(item) == 'line':
                 x0, y0, x1, y1 = self.canvas.coords(item)  # end pnts
@@ -2638,16 +2673,16 @@ class PyurCad(tk.Tk):  # root = self
                 else:
                     line = cnvrt_2pts_to_coef((x0, y0), (x1, y1))
                     u, v = proj_pt_on_line(line, (x, y))
-                    if x0<u<x1 or x0>u>x1 or y0<v<y1 or y0>v>y1:
+                    if x0 < u < x1 or x0 > u > x1 or y0 < v < y1 or y0 > v > y1:
                         return (u, v)
-        
-        elif len(items) > 1:  # intersection found                   
+
+        elif len(items) > 1:  # intersection found
             if self.canvas.type(items[0]) == 'line' and\
                self.canvas.type(items[1]) == 'line':
-                a,b,c,d = self.canvas.coords(items[0])
-                e,f,g,h = self.canvas.coords(items[1])
-                line1 = cnvrt_2pts_to_coef((a,b), (c,d))
-                line2 = cnvrt_2pts_to_coef((e,f), (g,h))
+                a, b, c, d = self.canvas.coords(items[0])
+                e, f, g, h = self.canvas.coords(items[1])
+                line1 = cnvrt_2pts_to_coef((a, b), (c, d))
+                line2 = cnvrt_2pts_to_coef((e, f), (g, h))
                 if line1 == line2:  # colinear; toss one and try again
                     items.pop()
                     return self.find_catch_pt(items, x, y)
@@ -2659,30 +2694,30 @@ class PyurCad(tk.Tk):  # root = self
                     return ip
             elif self.canvas.type(items[0]) in ('oval', 'arc') and\
                  self.canvas.type(items[1]) in ('oval', 'arc'):
-                a,b,c,d = self.canvas.coords(items[0])
-                x1, y1 = midpoint((a,b), (c,d))
+                a, b, c, d = self.canvas.coords(items[0])
+                x1, y1 = midpoint((a, b), (c, d))
                 r1 = (c-a)/2
-                e,f,g,h = self.canvas.coords(items[1])
-                x2, y2 = midpoint((e,f), (g,h))
+                e, f, g, h = self.canvas.coords(items[1])
+                x2, y2 = midpoint((e, f), (g, h))
                 r2 = (g-e)/2
                 ip = circ_circ_inters(x1, y1, r1, x2, y2, r2)
                 if ip:
                     for pt in ip:
-                        if p2p_dist(pt, (x,y)) < cr:
+                        if p2p_dist(pt, (x, y)) < cr:
                             return pt
             elif self.canvas.type(items[0]) in ('oval', 'arc') and\
                  self.canvas.type(items[1]) == 'line':
                 items[0], items[1] = items[1], items[0]
             if self.canvas.type(items[0]) == 'line' and\
                self.canvas.type(items[1]) in ('oval', 'arc'):
-                x1,y1,x2,y2 = self.canvas.coords(items[0])
-                line = cnvrt_2pts_to_coef((x1,y1), (x2,y2))
-                e,f,g,h = self.canvas.coords(items[1])
-                xc, yc = cntr = midpoint((e,f), (g,h))
+                x1, y1, x2, y2 = self.canvas.coords(items[0])
+                line = cnvrt_2pts_to_coef((x1, y1), (x2, y2))
+                e, f, g, h = self.canvas.coords(items[1])
+                xc, yc = cntr = midpoint((e, f), (g, h))
                 r = (g-e)/2
                 ip = line_circ_inters(x1, y1, x2, y2, xc, yc, r)
                 for pt in ip:
-                    if p2p_dist(pt, (x,y)) < cr:
+                    if p2p_dist(pt, (x, y)) < cr:
                         return pt
 
     def bindings(self):
@@ -2699,7 +2734,9 @@ class PyurCad(tk.Tk):  # root = self
         self.bind("<Control-z>", self.undo)
         self.bind("<Control-y>", self.redo)
 
-    ###   GUI  #########################################################
+    # =======================================================================
+    # GUI
+    # =======================================================================
 
     def __init__(self):
         super().__init__()
@@ -2714,7 +2751,7 @@ class PyurCad(tk.Tk):  # root = self
         self.create_drawing_canvas()
         self.bind_menu_accelrator_keys()
         self.show_selected_tool_icon_in_top_bar("noop")
-        
+
     def create_menu(self):
         self.menubar = tk.Menu(self)
         self.filemenu = tk.Menu(self.menubar, tearoff=1)
@@ -2748,33 +2785,33 @@ class PyurCad(tk.Tk):  # root = self
         self.measmenu = tk.Menu(self.menubar, tearoff=1)
         self.measmenu.add_command(label="Pt-Pt distance", command=self.meas_dist)
         self.measmenu.add_command(label="Item Coords",
-                                  command=lambda k="itemcoords":self.dispatch(k))
+                                  command=lambda k="itemcoords": self.dispatch(k))
         self.measmenu.add_command(label="Item Length",
-                                  command=lambda k="itemlength":self.dispatch(k))
+                                  command=lambda k="itemlength": self.dispatch(k))
         self.measmenu.add_command(label="Calculator", command=self.launch_calc)
         self.menubar.add_cascade(label="Measure", menu=self.measmenu)
 
         self.dimmenu = tk.Menu(self.menubar, tearoff=1)
         self.dimmenu.add_command(label="Dim Horizontal",
-                                 command=lambda k="dim_h":self.dispatch(k))
+                                 command=lambda k="dim_h": self.dispatch(k))
         self.dimmenu.add_command(label="Dim Vertical",
-                                 command=lambda k="dim_v":self.dispatch(k))
+                                 command=lambda k="dim_v": self.dispatch(k))
         self.dimmenu.add_command(label="Dim Parallel",
-                                 command=lambda k="dim_par":self.dispatch(k))
+                                 command=lambda k="dim_par": self.dispatch(k))
         self.menubar.add_cascade(label="Dimensions", menu=self.dimmenu)
 
         self.textmenu = tk.Menu(self.menubar, tearoff=1)
         self.textmenu.add_command(label="Create Text",
-                                  command=lambda k="text_enter":self.dispatch(k))
+                                  command=lambda k="text_enter": self.dispatch(k))
         self.textmenu.add_command(label="Move Text",
-                                  command=lambda k="text_move":self.dispatch(k))
+                                  command=lambda k="text_move": self.dispatch(k))
         self.textmenu.add_command(label="Edit Text",
                                   command=self.txt_params)
         self.menubar.add_cascade(label="Text", menu=self.textmenu)
 
         self.delmenu = tk.Menu(self.menubar, tearoff=1)
         self.delmenu.add_command(label="Delete Element",
-                                 command=lambda k="del_el":self.dispatch(k))
+                                 command=lambda k="del_el": self.dispatch(k))
         self.delmenu.add_command(label="Delete All Constr", command=self.del_all_c)
         self.delmenu.add_command(label="Delete All Geometry", command=self.del_all_g)
         self.delmenu.add_command(label="Delete All Dimensions", command=self.del_all_d)
@@ -2785,13 +2822,13 @@ class PyurCad(tk.Tk):  # root = self
 
         self.debugmenu = tk.Menu(self.menubar, tearoff=1)
         self.debugmenu.add_command(label="show Zoom Scale",
-                                   command=lambda k="show_zoomscale":self.dispatch(k))
+                                   command=lambda k="show_zoomscale": self.dispatch(k))
         self.debugmenu.add_command(label="show self.calculator",
-                                   command=lambda k="show_calc":self.dispatch(k))
+                                   command=lambda k="show_calc": self.dispatch(k))
         self.debugmenu.add_command(label="show dir(self)",
-                                   command=lambda k="show_dir_self":self.dispatch(k))
+                                   command=lambda k="show_dir_self": self.dispatch(k))
         self.debugmenu.add_command(label="show dir(self)",
-                                   command=lambda k="show_dir_root":self.dispatch(k))
+                                   command=lambda k="show_dir_root": self.dispatch(k))
         self.menubar.add_cascade(label="Debug", menu=self.debugmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
@@ -2850,8 +2887,8 @@ class PyurCad(tk.Tk):  # root = self
         self.canvas = Zooming(self.canvas_frame, background="black",
                               width=800, height=500)
         self.canvas.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.BOTH)
-        self.bindings() # original cadvas bindings
-        self.canvas.move_can(60,420)    # Put 0,0 near lower left corner
+        self.bindings()  # original cadvas bindings
+        self.canvas.move_can(60, 420)  # Put 0,0 near lower left corner
 
     def bind_menu_accelrator_keys(self):
         self.bind('<KeyPress-F1>', self.on_about_menu_clicked)
@@ -2879,6 +2916,7 @@ class PyurCad(tk.Tk):  # root = self
                 underline = None
             menu.add_command(label=menu_label, underline=underline,
                              accelerator=accelrator_key, command=eval(command_callback))
+
 
 if __name__ == '__main__':
 
