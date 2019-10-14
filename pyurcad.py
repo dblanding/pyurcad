@@ -661,22 +661,22 @@ class PyurCad(tk.Tk):  # root = self
         """Measure distance between 2 points."""
         self.op = 'meas_dist'
         if not self.pt_stack:
-            self.updateMessageBar('Pick 1st point for distance measurement.')
+            self.update_message_bar('Pick 1st point for distance measurement.')
             self.set_sel_mode('pnt')
         elif len(self.pt_stack) == 1:
-            self.updateMessageBar('Pick 2nd point for distance measurement.')
+            self.update_message_bar('Pick 2nd point for distance measurement.')
         elif len(self.pt_stack) > 1:
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
             dist = p2p_dist(p1, p2)/self.unitscale
-            self.updateMessageBar('%s %s' % (dist, self.units))
+            self.update_message_bar('%s %s' % (dist, self.units))
             self.launch_calc()
             self.calculator.putx(dist)
 
     def itemcoords(self, obj=None):
         """Print coordinates (in ECS) of selected element."""
         if not self.obj_stack:
-            self.updateMessageBar('Pick element from drawing.')
+            self.update_message_bar('Pick element from drawing.')
             self.set_sel_mode('items')
         elif self.obj_stack:
             elem = self.obj_stack.pop()
@@ -689,7 +689,7 @@ class PyurCad(tk.Tk):  # root = self
     def itemlength(self, obj=None):
         """Print length (in current units) of selected line, circle, or arc."""
         if not self.obj_stack:
-            self.updateMessageBar('Pick element from drawing.')
+            self.update_message_bar('Pick element from drawing.')
             self.set_sel_mode('items')
         elif self.obj_stack:
             elem = None
@@ -832,7 +832,7 @@ class PyurCad(tk.Tk):  # root = self
 
         message = 'Pick a pt or enter a value'
         message += self.shift_key_advice
-        self.updateMessageBar(message)
+        self.update_message_bar(message)
         proceed = 0
         if self.pt_stack:
             p = self.pt_stack.pop()
@@ -854,7 +854,7 @@ class PyurCad(tk.Tk):  # root = self
 
         message = 'Pick a pt or enter a value'
         message += self.shift_key_advice
-        self.updateMessageBar(message)
+        self.update_message_bar(message)
         proceed = 0
         if self.pt_stack:
             p = self.pt_stack.pop()
@@ -876,7 +876,7 @@ class PyurCad(tk.Tk):  # root = self
 
         message = 'Pick a pt or enter coords x,y'
         message += self.shift_key_advice
-        self.updateMessageBar(message)
+        self.update_message_bar(message)
         if self.pt_stack:
             p = self.pt_stack.pop()
             self.cline_gen(angled_cline(p, 0))
@@ -888,7 +888,7 @@ class PyurCad(tk.Tk):  # root = self
         if not self.pt_stack:
             message = 'Pick a pt for angled construction line or enter coords'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif self.pt_stack and self.float_stack:
             p0 = self.pt_stack[0]
             ang = self.float_stack.pop()
@@ -902,7 +902,7 @@ class PyurCad(tk.Tk):  # root = self
         elif self.pt_stack and not self.float_stack:
             message = 'Specify 2nd point or enter angle in degrees'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
             if pnt:
                 p0 = self.pt_stack[0]
                 p1 = self.cp2ep(pnt)
@@ -916,17 +916,17 @@ class PyurCad(tk.Tk):  # root = self
         if not self.pt_stack:
             message = 'Specify a pt for new construction line'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif not self.float_stack:
-            self.updateMessageBar('Enter offset angle in degrees')
+            self.update_message_bar('Enter offset angle in degrees')
         elif len(self.pt_stack) == 1:
             message = 'Pick first point on reference line'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif len(self.pt_stack) == 2:
             message = 'Pick second point on reference line'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif len(self.pt_stack) == 3:
             p3 = self.pt_stack.pop()
             p2 = self.pt_stack.pop()
@@ -943,15 +943,15 @@ class PyurCad(tk.Tk):  # root = self
         if not self.float_stack and not self.pt_stack:
             message = 'Enter bisector factor (Default=.5) or specify vertex'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif not self.pt_stack:
             message = 'Specify vertex point'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif len(self.pt_stack) == 1:
-            self.updateMessageBar('Specify point on base line')
+            self.update_message_bar('Specify point on base line')
         elif len(self.pt_stack) == 2:
-            self.updateMessageBar('Specify second point')
+            self.update_message_bar('Specify second point')
             if pnt:
                 f = .5
                 if self.float_stack:
@@ -977,15 +977,15 @@ class PyurCad(tk.Tk):  # root = self
         if not self.pt_stack and not self.float_stack:
             message = 'Enter bisector factor (Default=.5) or specify first point'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif not self.pt_stack:
             message = 'Specify first point'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif len(self.pt_stack) == 1:
             message = 'Specify second point'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
             if pnt:
                 f = .5
                 if self.float_stack:
@@ -1014,17 +1014,17 @@ class PyurCad(tk.Tk):  # root = self
         2) Parallel to a selected straight element through a selected point."""
 
         if not self.obj_stack and not self.float_stack:
-            self.updateMessageBar(
+            self.update_message_bar(
                 'Pick a straight element or enter an offset distance')
             self.set_sel_mode('items')
         elif self.float_stack:      # mode 1
             if not self.obj_stack:
                 self.set_sel_mode('items')
-                self.updateMessageBar(
+                self.update_message_bar(
                     'Pick a straight element to be parallel to')
             elif not self.pt_stack:
                 self.set_sel_mode('pnt')
-                self.updateMessageBar('Pick on (+) side of line')
+                self.update_message_bar('Pick on (+) side of line')
             else:
                 obj = self.obj_stack.pop()
                 p = self.pt_stack.pop()
@@ -1062,7 +1062,7 @@ class PyurCad(tk.Tk):  # root = self
                 self.set_sel_mode('pnt')
                 message = 'Select point for new parallel line'
                 message += self.shift_key_advice
-                self.updateMessageBar(message)
+                self.update_message_bar(message)
                 if pnt:
                     p = self.cp2ep(pnt)
                     parline = para_line(baseline, p)
@@ -1076,12 +1076,12 @@ class PyurCad(tk.Tk):  # root = self
         """Create a perpendicular cline through a selected point."""
 
         if not self.obj_stack:
-            self.updateMessageBar('Pick line to be perpendicular to')
+            self.update_message_bar('Pick line to be perpendicular to')
             self.set_sel_mode('items')
         else:
             message = 'Select point for perpendicular construction'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
             self.set_sel_mode('pnt')
             obj = self.obj_stack[0]
             if not obj:
@@ -1108,10 +1108,10 @@ class PyurCad(tk.Tk):  # root = self
         '''Create a construction line through a point, tangent to a circle.'''
 
         if not self.obj_stack:
-            self.updateMessageBar('Pick circle')
+            self.update_message_bar('Pick circle')
             self.set_sel_mode('items')
         elif self.obj_stack and not self.pt_stack:
-            self.updateMessageBar('specify point')
+            self.update_message_bar('specify point')
             self.set_sel_mode('pnt')
         elif self.obj_stack and self.pt_stack:
             item = self.obj_stack.pop()[0]
@@ -1130,10 +1130,10 @@ class PyurCad(tk.Tk):  # root = self
         '''Create a construction line tangent to 2 circles.'''
 
         if not self.obj_stack:
-            self.updateMessageBar('Pick first circle')
+            self.update_message_bar('Pick first circle')
             self.set_sel_mode('items')
         elif len(self.obj_stack) == 1:
-            self.updateMessageBar('Pick 2nd circle')
+            self.update_message_bar('Pick 2nd circle')
         elif len(self.obj_stack) == 2:
             item1 = self.obj_stack.pop()[0]
             item2 = self.obj_stack.pop()[0]
@@ -1167,14 +1167,14 @@ class PyurCad(tk.Tk):  # root = self
 
         if not self.obj_stack:
             self.set_sel_mode('items')
-            self.updateMessageBar('Select existing circle')
+            self.update_message_bar('Select existing circle')
         elif self.obj_stack and not (self.float_stack or self.pt_stack):
             item = self.obj_stack[0][0]
             self.coords = None
             if self.curr[item].type in ('cc', 'gc'):
                 self.coords = self.curr[item].coords
             self.set_sel_mode('pnt')
-            self.updateMessageBar(
+            self.update_message_bar(
                 'Enter relative radius or specify point on new circle')
             if self.coords and p1:
                 pc, r0 = self.coords
@@ -1197,11 +1197,11 @@ class PyurCad(tk.Tk):  # root = self
         """Create a constr circle from 3 pts on circle."""
 
         if not self.pt_stack:
-            self.updateMessageBar('Pick first point on circle')
+            self.update_message_bar('Pick first point on circle')
         elif len(self.pt_stack) == 1:
-            self.updateMessageBar('Pick second point on circle')
+            self.update_message_bar('Pick second point on circle')
         elif len(self.pt_stack) == 2:
-            self.updateMessageBar('Pick third point on circle')
+            self.update_message_bar('Pick third point on circle')
             if p3:
                 p3 = self.cp2ep(p3)
                 p2 = self.pt_stack[1]
@@ -1253,7 +1253,7 @@ class PyurCad(tk.Tk):  # root = self
         if not self.pt_stack:
             message = 'Pick start point of line or enter coords'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif len(self.pt_stack) > 1:
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
@@ -1285,7 +1285,7 @@ class PyurCad(tk.Tk):  # root = self
             self.rtext = self.canvas.create_text(xr+20, yr-20,
                                                  text=strcoords,
                                                  fill=TEXTCOLOR)
-            self.updateMessageBar('Specify end point of line')
+            self.update_message_bar('Specify end point of line')
 
     def poly(self, p1=None):
         '''Create chain of line segments, enabling 'rubber line' mode.'''
@@ -1294,7 +1294,7 @@ class PyurCad(tk.Tk):  # root = self
             self.poly_start_pt = None
             message = 'Pick start point or enter coords'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         elif len(self.pt_stack) > 1:
             lastpt = self.pt_stack[-1]
             self.line()     # This will pop 2 points off stack
@@ -1304,17 +1304,17 @@ class PyurCad(tk.Tk):  # root = self
             if not self.poly_start_pt:
                 self.poly_start_pt = self.pt_stack[-1]
             self.line(p1)   # This will generate rubber line
-            self.updateMessageBar('Pick next point or enter coords')
+            self.update_message_bar('Pick next point or enter coords')
 
     def rect(self, p2=None):
         '''Generate a rectangle from 2 diagonally opposite corners.'''
 
         rc = RUBBERCOLOR
         if not self.pt_stack:
-            self.updateMessageBar(
+            self.update_message_bar(
                 'Pick first corner of rectangle or enter coords')
         elif len(self.pt_stack) == 1 and p2:
-            self.updateMessageBar(
+            self.update_message_bar(
                 'Pick opposite corner of rectangle or enter coords')
             p1 = self.pt_stack[0]
             x1, y1 = self.ep2cp(p1)
@@ -1403,9 +1403,9 @@ class PyurCad(tk.Tk):  # root = self
 
         finish = 0
         if not self.pt_stack:
-            self.updateMessageBar('Pick center of circle or enter coords')
+            self.update_message_bar('Pick center of circle or enter coords')
         elif len(self.pt_stack) == 1 and p1 and not self.float_stack:
-            self.updateMessageBar('Specify point on circle or radius')
+            self.update_message_bar('Specify point on circle or radius')
             pc = self.pt_stack[0]
             p1 = self.cp2ep(p1)
             r = p2p_dist(pc, p1)
@@ -1470,11 +1470,11 @@ class PyurCad(tk.Tk):  # root = self
         """Create an arc from center pt, start pt and end pt."""
 
         if not self.pt_stack:
-            self.updateMessageBar('Specify center of arc')
+            self.update_message_bar('Specify center of arc')
         elif len(self.pt_stack) == 1:
-            self.updateMessageBar('Specify start point of arc')
+            self.update_message_bar('Specify start point of arc')
         elif len(self.pt_stack) == 2:
-            self.updateMessageBar('Specify end point of arc')
+            self.update_message_bar('Specify end point of arc')
             if p2:
                 p2 = self.cp2ep(p2)
                 p1 = self.pt_stack[1]
@@ -1502,11 +1502,11 @@ class PyurCad(tk.Tk):  # root = self
         """Create an arc from start pt, end pt, and 3rd pt on the arc."""
 
         if not self.pt_stack:
-            self.updateMessageBar('Specify start of arc')
+            self.update_message_bar('Specify start of arc')
         elif len(self.pt_stack) == 1:
-            self.updateMessageBar('Specify end of arc')
+            self.update_message_bar('Specify end of arc')
         elif len(self.pt_stack) == 2:
-            self.updateMessageBar('Specify point on arc')
+            self.update_message_bar('Specify point on arc')
             if p3:
                 p3 = self.cp2ep(p3)
                 p2 = self.pt_stack[1]
@@ -1541,11 +1541,11 @@ class PyurCad(tk.Tk):  # root = self
 
     def slot(self, p1=None):
         if not self.pt_stack:
-            self.updateMessageBar('Specify first point for slot')
+            self.update_message_bar('Specify first point for slot')
         elif len(self.pt_stack) == 1:
-            self.updateMessageBar('Specify second point for slot')
+            self.update_message_bar('Specify second point for slot')
         elif len(self.pt_stack) == 2 and not self.float_stack:
-            self.updateMessageBar('Enter slot width')
+            self.update_message_bar('Enter slot width')
         elif len(self.pt_stack) == 2 and self.float_stack:
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
@@ -1578,12 +1578,12 @@ class PyurCad(tk.Tk):  # root = self
 
         if not self.obj_stack:
             self.set_sel_mode('items')
-            self.updateMessageBar('Pick straight line to split')
+            self.update_message_bar('Pick straight line to split')
         elif self.obj_stack and not self.pt_stack:
             self.set_sel_mode('pnt')
             message = 'Pick point for split'
             message += self.shift_key_advice
-            self.updateMessageBar(message)
+            self.update_message_bar(message)
         else:
             # When picking a geometry line that overlays a
             # construction line, need to ignore the c-line
@@ -1604,9 +1604,9 @@ class PyurCad(tk.Tk):  # root = self
 
         if not self.obj_stack:
             self.set_sel_mode('items')
-            self.updateMessageBar('Pick first line to join')
+            self.update_message_bar('Pick first line to join')
         elif len(self.obj_stack) == 1:
-            self.updateMessageBar('Pick second line to join')
+            self.update_message_bar('Pick second line to join')
         elif len(self.obj_stack) == 2:
             item2 = self.obj_stack.pop()[0]
             item1 = self.obj_stack.pop()[0]
@@ -1634,10 +1634,10 @@ class PyurCad(tk.Tk):  # root = self
         """Create a fillet of radius r at the common corner of 2 lines."""
 
         if not self.obj_stack and not self.float_stack:
-            self.updateMessageBar('Enter radius for fillet')
+            self.update_message_bar('Enter radius for fillet')
         elif not self.obj_stack:
             self.set_sel_mode('items')
-            self.updateMessageBar('Pick corner to apply fillet')
+            self.update_message_bar('Pick corner to apply fillet')
         elif self.obj_stack and self.float_stack:
             rw = self.float_stack[-1]*self.unitscale
             rc = self.canvas.w2c_dx(rw)
@@ -1686,15 +1686,15 @@ class PyurCad(tk.Tk):  # root = self
             self.set_sel_mode('items')
             self.allow_list = 1
             msg = 'Specify number of copies or select geometry item(s) to move'
-            self.updateMessageBar(msg)
+            self.update_message_bar(msg)
         elif not self.obj_stack and not self.pt_stack:
-            self.updateMessageBar('Select geometry item(s) to move')
+            self.update_message_bar('Select geometry item(s) to move')
         elif self.obj_stack and not self.pt_stack:
             self.set_sel_mode('pnt')
             self.allow_list = 0
-            self.updateMessageBar('Select "FROM" point')
+            self.update_message_bar('Select "FROM" point')
         elif self.obj_stack and len(self.pt_stack) == 1:
-            self.updateMessageBar('Select "TO" point')
+            self.update_message_bar('Select "TO" point')
         elif self.obj_stack and len(self.pt_stack) == 2:
             if self.float_stack:
                 repeat = int(self.float_stack.pop())
@@ -1749,17 +1749,17 @@ class PyurCad(tk.Tk):  # root = self
             self.set_sel_mode('items')
             self.allow_list = 1
             msg = 'Specify number of copies or select geometry item(s) to move'
-            self.updateMessageBar(msg)
+            self.update_message_bar(msg)
         elif not self.obj_stack and not self.pt_stack:
-            self.updateMessageBar('Select geometry item(s) to move')
+            self.update_message_bar('Select geometry item(s) to move')
         elif self.obj_stack and not self.pt_stack:
             if self.float_stack:
                 self.repeat = int(self.float_stack.pop())   # number of copies
             self.set_sel_mode('pnt')
             self.allow_list = 0
-            self.updateMessageBar('Select center of rotation')
+            self.update_message_bar('Select center of rotation')
         elif self.obj_stack and self.pt_stack and not self.float_stack:
-            self.updateMessageBar('Specify angle of rotation in degrees')
+            self.update_message_bar('Specify angle of rotation in degrees')
         elif self.obj_stack and self.pt_stack and self.float_stack:
             ctr = self.pt_stack.pop()
             handles = self.obj_stack.pop()
@@ -1870,11 +1870,11 @@ class PyurCad(tk.Tk):  # root = self
 
         rc = RUBBERCOLOR
         if not self.pt_stack:
-            self.updateMessageBar('Pick 1st point.')
+            self.update_message_bar('Pick 1st point.')
         elif len(self.pt_stack) == 1:
-            self.updateMessageBar('Pick 2nd point.')
+            self.update_message_bar('Pick 2nd point.')
         elif len(self.pt_stack) == 2 and p:
-            self.updateMessageBar('Pick location for dimension text.')
+            self.update_message_bar('Pick location for dimension text.')
             p3 = self.cp2ep(p)
             p2 = self.pt_stack[1]
             p1 = self.pt_stack[0]
@@ -1913,7 +1913,7 @@ class PyurCad(tk.Tk):  # root = self
 
         if not self.obj_stack:
             self.set_sel_mode('items')
-            self.updateMessageBar(
+            self.update_message_bar(
                 'Pick linear element to define direction of dimension.')
         elif self.obj_stack:
             self.set_sel_mode('pnt')
@@ -1978,9 +1978,9 @@ class PyurCad(tk.Tk):  # root = self
         rc = RUBBERCOLOR
         if not self.text:
             self.text_entry_enable = 1
-            self.updateMessageBar('Enter text')
+            self.update_message_bar('Enter text')
         elif not self.pt_stack:
-            self.updateMessageBar('Pick location for center of text')
+            self.update_message_bar('Pick location for center of text')
             if p:
                 x, y = p
                 if self.rubber:
@@ -2004,7 +2004,7 @@ class PyurCad(tk.Tk):  # root = self
 
         if not self.obj_stack:
             self.set_sel_mode('items')
-            self.updateMessageBar('Select text to move.')
+            self.update_message_bar('Select text to move.')
         elif not self.pt_stack:
             if not self.rubber:
                 for item_tuple in self.obj_stack:
@@ -2018,11 +2018,11 @@ class PyurCad(tk.Tk):  # root = self
                                                              tag='r')
             if self.rubber:
                 self.canvas.delete(self.rubber)
-            if p:  # cursor coordinates supplied by mouseMove
+            if p:  # cursor coordinates supplied by mouse_move
                 p = self.cp2ep(p)  # coords of p are in CCS
                 self.rubber_tx.coords = p
             self.rubber = self.text_draw(self.rubber_tx, tag='r')
-            self.updateMessageBar('Pick new location for center of text')
+            self.update_message_bar('Pick new location for center of text')
             self.set_sel_mode('pnt')
         elif self.pt_stack:
             newpoint = self.pt_stack.pop()
@@ -2045,12 +2045,12 @@ class PyurCad(tk.Tk):  # root = self
     def txt_params(self, obj=None):
         self.op = 'txt_params'
         if not self.obj_stack and not self.modified_text_object:
-            self.updateMessageBar('Pick text to modify')
+            self.update_message_bar('Pick text to modify')
             self.set_sel_mode('items')
         elif self.obj_stack and not self.modified_text_object:
             msg = "Use editor to modify parameters, then click 'Change Parameters'"
-            self.updateMessageBar(msg)
-            self.set_sel_mode('pnt')  # keep mouseMove calling func
+            self.update_message_bar(msg)
+            self.set_sel_mode('pnt')  # keep mouse_move calling func
             self.handle = self.obj_stack.pop()[0]
             self.obj_stack = []
             print("handle of text to change: ", self.handle)
@@ -2089,7 +2089,7 @@ class PyurCad(tk.Tk):  # root = self
 
         self.set_sel_mode('items')
         self.allow_list = 1
-        self.updateMessageBar('Pick element(s) to delete.')
+        self.update_message_bar('Pick element(s) to delete.')
         if self.obj_stack:
             item_tuple = self.obj_stack.pop()
             for item in item_tuple:
@@ -2342,7 +2342,7 @@ class PyurCad(tk.Tk):  # root = self
         self.update_tool_bar_button_on_top_bar(button_index)
         if self.selected_tool_bar_function == "noop":
             self.op = ''
-            self.updateMessageBar(self.msg)
+            self.update_message_bar(self.msg)
         else:
             self.op = self.selected_tool_bar_function
             self.dispatch(self.op)
@@ -2371,7 +2371,7 @@ class PyurCad(tk.Tk):  # root = self
         label.image = photo
         label.pack(side="left")
 
-    def updateMessageBar(self, msg):
+    def update_message_bar(self, msg):
         self.message.configure(text=msg)
 
     # =======================================================================
@@ -2380,7 +2380,7 @@ class PyurCad(tk.Tk):  # root = self
 
     def noop(self):
         """Empty method for 'No Operation'"""
-        self.updateMessageBar(self.msg)
+        self.update_message_bar(self.msg)
 
     def dispatch(self, key):
         """Dispatch commands initiated by menubar & toolbar buttons."""
@@ -2428,9 +2428,9 @@ class PyurCad(tk.Tk):  # root = self
         self.text_entry_enable = 0
         self.set_sel_mode('')
         self.allow_list = 0
-        self.quitpopup()
+        self.quit_popup()
         self.save_delta()
-        self.updateMessageBar('CTRL-LMB to pan.  CTRL-RMB to zoom.')
+        self.update_message_bar('CTRL-LMB to pan.  CTRL-RMB to zoom.')
 
     def enterfloat(self, str_value):
         """Receive string value (from calculator) and do the right thing."""
@@ -2441,7 +2441,7 @@ class PyurCad(tk.Tk):  # root = self
             func = 'self.%s()' % self.op
             eval(func)
 
-    def keybrdEntry(self, event):
+    def keyboard_entry(self, event):
         """Store user entered values on stack.
 
         POINTS:
@@ -2475,7 +2475,7 @@ class PyurCad(tk.Tk):  # root = self
             func = 'self.%s()' % self.op
             eval(func)
 
-    def lftClick(self, event):
+    def lft_click(self, event):
         '''Place screen picks on stack(s), call method named by self.op.
 
         In "point" mode, put x,y coords of "catch point", if any, on point
@@ -2517,10 +2517,10 @@ class PyurCad(tk.Tk):  # root = self
                     if item not in self.obj_stack[-1]:
                         self.obj_stack[-1].append(item)
 
-    def midClick(self, event):
+    def mid_click(self, event):
         self.end()
 
-    def rgtClick(self, event):
+    def rgt_click(self, event):
         '''Popup menu for view options.'''
 
         if self.popup:
@@ -2529,15 +2529,15 @@ class PyurCad(tk.Tk):  # root = self
         self.popup.overrideredirect(1)
         frame = tk.Frame(self.popup)
         tk.Button(frame, text='View Fit',
-                  command=lambda: (self.view_fit(), self.quitpopup())).pack()
+                  command=lambda: (self.view_fit(), self.quit_popup())).pack()
         if self.allow_list:
             tk.Button(frame, text='Start list',
                       command=lambda: (self.set_sel_mode('list'),
-                                       self.quitpopup())).pack()
+                                       self.quit_popup())).pack()
             tk.Button(frame, text='End list',
                       command=lambda: (self.set_sel_mode('items'),
                                        eval('self.%s()' % self.op),
-                                       self.quitpopup())).pack()
+                                       self.quit_popup())).pack()
         frame.pack()
         # size, x, y = tk.winfo_toplevel().winfo_geometry().split('+')
         x = 100
@@ -2547,12 +2547,12 @@ class PyurCad(tk.Tk):  # root = self
         else:
             self.popup.geometry('60x30+%s+%s' % (x+event.x, y+event.y+30))
 
-    def quitpopup(self):
+    def quit_popup(self):
         if self.popup:
             self.popup.destroy()
             self.popup = None
 
-    def genCatchPnt(self, x, y, color='yellow', regen=0):
+    def gen_catch_pnt(self, x, y, color='yellow', regen=0):
         '''Generate (or regenerate) a catch point at coordinates x, y.'''
 
         ps = self.catch_pnt_size
@@ -2563,7 +2563,7 @@ class PyurCad(tk.Tk):  # root = self
                                                           x+ps, y+ps,
                                                           outline=color)
 
-    def setCC(self, event):
+    def set_cntr_catch(self, event):
         '''Set center catch flag'''
 
         if event.type == '2' and event.keysym == 'Shift_L':
@@ -2571,7 +2571,7 @@ class PyurCad(tk.Tk):  # root = self
         else:
             self.catchCntr = False
 
-    def mouseMove(self, event):
+    def mouse_move(self, event):
         '''Display a catch point (ID=self.catch_pnt) on a line within
         self.catch_radius of the cursor. Catch point should be "sticky"
         at midpoints, ends and intersections.'''
@@ -2591,9 +2591,9 @@ class PyurCad(tk.Tk):  # root = self
             if cp:
                 x, y = cp
                 if self.catch_pnt:
-                    self.genCatchPnt(x, y, regen=1)
+                    self.gen_catch_pnt(x, y, regen=1)
                 else:
-                    self.genCatchPnt(x, y)
+                    self.gen_catch_pnt(x, y)
             else:
                 if self.catch_pnt:
                     self.canvas.delete(self.catch_pnt)
@@ -2720,12 +2720,12 @@ class PyurCad(tk.Tk):  # root = self
     def bindings(self):
         self.canvas.panbindings()
         self.canvas.zoombindings()
-        self.canvas.bind("<Motion>", self.mouseMove)
-        self.canvas.bind("<Button-1>", self.lftClick)
-        self.canvas.bind("<Button-2>", self.midClick)
-        self.canvas.bind("<Button-3>", self.rgtClick)
-        self.bind("<Key>", self.setCC)
-        self.bind("<KeyRelease>", self.setCC)
+        self.canvas.bind("<Motion>", self.mouse_move)
+        self.canvas.bind("<Button-1>", self.lft_click)
+        self.canvas.bind("<Button-2>", self.mid_click)
+        self.canvas.bind("<Button-3>", self.rgt_click)
+        self.bind("<Key>", self.set_cntr_catch)
+        self.bind("<KeyRelease>", self.set_cntr_catch)
         self.bind("<Control-B1-ButtonRelease>", self.regen_all_cl)
         self.bind("<Control-B3-ButtonRelease>", self.regen)
         self.bind("<Control-z>", self.undo)
@@ -2871,8 +2871,8 @@ class PyurCad(tk.Tk):  # root = self
     def create_entry_widget(self):
         self.entry = tk.Entry(self.status_bar, width=15)
         self.entry.pack(side="right", padx=10)
-        self.entry.bind("<KeyPress-Return>", self.keybrdEntry)
-        self.entry.bind("<KeyPress-KP_Enter>", self.keybrdEntry)
+        self.entry.bind("<KeyPress-Return>", self.keyboard_entry)
+        self.entry.bind("<KeyPress-KP_Enter>", self.keyboard_entry)
 
     def create_message_widget(self):
         self.message = tk.Label(self.status_bar, text=self.msg)
