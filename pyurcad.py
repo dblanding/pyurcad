@@ -372,18 +372,6 @@ def rotate_pt(pt, ang, ctr):
 
 class PyurCad(tk.Tk):  # root = self
 
-    start_x, start_y = 0, 0
-    end_x, end_y = 0, 0
-    current_item = None
-    fill = "red"
-    outline = "red"
-    width = 2.0
-    arrow = None
-    dash = None
-    background = 'white'
-    foreground = 'red'
-    file_name = "untitled"
-
     tool_bar_function_names = {'noop': "No Current Operation",
                                'hvcl': "Horizontal & Vertical Construction Line",
                                'hcl': "Horizontal Construction Line",
@@ -450,6 +438,7 @@ class PyurCad(tk.Tk):  # root = self
     textsize = 10       # default text size
     textstyle = 'Calibri'   # default text style
     TEXTCOLOR = TEXTCOLOR
+    constr_dash = 2     # dash size for construction lines & circles
     modified_text_object = None
     cl_list = []        # list of all cline coords (so they don't get lost)
     shift_key_advice = ' (Use SHIFT key to select center of element)'
@@ -751,6 +740,17 @@ class PyurCad(tk.Tk):  # root = self
         pprint.pprint(dir(self))
         self.end()
 
+    def draw_line(self):
+        self.current_item = self.canvas.create_line(
+            self.start_x, self.start_y, self.end_x, self.end_y,
+            fill=self.fill, width=self.width, arrow=self.arrow, dash=self.dash)
+
+    def draw_workplane(self):
+        start_x, start_y = self.ep2cp((-100, -100))
+        end_x, end_y = self.ep2cp((400, 400))
+        self.wp = self.canvas.create_rectangle(
+            start_x, start_y, end_x, end_y, fill='#d5ffd5', outline=None)
+
     # =======================================================================
     # Construction
     # construction lines (clines) are "infinite" length lines
@@ -778,13 +778,15 @@ class PyurCad(tk.Tk):  # root = self
                     self.rubber = self.canvas.create_line(p1[0], p1[1],
                                                           p2[0], p2[1],
                                                           fill=CONSTRCOLOR,
-                                                          tags='r')
+                                                          tags='r',
+                                                          dash=self.constr_dash)
             else:
                 if self.rubber:
                     self.canvas.delete(self.rubber)
                     self.rubber = None
                 handle = self.canvas.create_line(p1[0], p1[1], p2[0], p2[1],
-                                                 fill=CONSTRCOLOR, tags='c')
+                                                 fill=CONSTRCOLOR, tags='c',
+                                                 dash=self.constr_dash)
                 self.canvas.tag_lower(handle)
                 attribs = (cline, CONSTRCOLOR)
                 e = entities.CL(attribs)
@@ -1334,11 +1336,15 @@ class PyurCad(tk.Tk):  # root = self
         This low level method accesses the canvas directly & returns tkid.
         The caller should save handle & entity_obj to self.curr if needed."""
 
+        if tag == 'c':
+            dash = self.constr_dash
+        else:
+            dash = None
         ctr, rad = coords
         x, y = self.ep2cp(ctr)
         r = self.canvas.w2c_dx(rad)
         handle = self.canvas.create_oval(x-r, y-r, x+r, y+r,
-                                         outline=color,
+                                         outline=color, dash=dash,
                                          tags=tag)
         return handle
 
@@ -2805,8 +2811,8 @@ class PyurCad(tk.Tk):  # root = self
                                    command=lambda k="show_calc": self.dispatch(k))
         self.debugmenu.add_command(label="show dir(self)",
                                    command=lambda k="show_dir_self": self.dispatch(k))
-        self.debugmenu.add_command(label="show self.op",
-                                   command=lambda k="show_op": self.dispatch(k))
+        self.debugmenu.add_command(label="draw Workplane",
+                                   command=self.draw_workplane)
         self.menubar.add_cascade(label="Debug", menu=self.debugmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
