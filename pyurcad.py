@@ -193,8 +193,7 @@ def closer(p0, p1, p2):
     d2 = (p2[0] - p0[0])**2 + (p2[1] - p0[1])**2
     if d1 < d2:
         return p1
-    else:
-        return p2
+    return p2
 
 
 def farther(p0, p1, p2):
@@ -203,8 +202,7 @@ def farther(p0, p1, p2):
     d2 = (p2[0] - p0[0])**2 + (p2[1] - p0[1])**2
     if d1 > d2:
         return p1
-    else:
-        return p2
+    return p2
 
 
 def find_fillet_pts(r, commonpt, end1, end2):
@@ -282,8 +280,7 @@ def extendline(p0, p1, d):
     pts = line_circ_inters(p0[0], p0[1], p1[0], p1[1], p1[0], p1[1], d)
     if pts:
         return farther(p0, pts[0], pts[1])
-    else:
-        return
+    return
 
 
 def shortenline(p0, p1, d):
@@ -292,8 +289,7 @@ def shortenline(p0, p1, d):
     pts = line_circ_inters(p0[0], p0[1], p1[0], p1[1], p1[0], p1[1], d)
     if pts:
         return closer(p0, pts[0], pts[1])
-    else:
-        return
+    return
 
 
 def line_tan_to_circ(circ, p):
@@ -683,25 +679,24 @@ class PyurCad(tk.Tk):  # root = self
             self.set_sel_mode('items')
         elif self.obj_stack:
             elem = None
+            length = 0
             for item in self.obj_stack.pop():
                 if 'g' in self.canvas.gettags(item):
                     elem = self.curr[item]
-            length = 0
-            if elem:
-                if elem.type is 'gl':
-                    p1, p2 = elem.coords
-                    length = p2p_dist(p1, p2) / self.unitscale
-                elif elem.type is 'gc':
-                    length = math.pi*2*elem.coords[1]/self.unitscale
-                elif elem.type is 'cc':
-                    length = math.pi*2*elem.coords[1]/self.unitscale
-                elif elem.type is 'ga':
-                    pc, r, a0, a1 = elem.coords
-                    ang = float(self.canvas.itemcget(item, 'extent'))
-                    length = math.pi*r*ang/180/self.unitscale
-                if length:
-                    self.launch_calc()
-                    self.calculator.putx(length)
+                    if elem.type is 'gl':
+                        p1, p2 = elem.coords
+                        length = p2p_dist(p1, p2) / self.unitscale
+                    elif elem.type is 'gc':
+                        length = math.pi*2*elem.coords[1]/self.unitscale
+                    elif elem.type is 'cc':
+                        length = math.pi*2*elem.coords[1]/self.unitscale
+                    elif elem.type is 'ga':
+                        pc, r, a0, a1 = elem.coords
+                        ang = float(self.canvas.itemcget(item, 'extent'))
+                        length = math.pi*r*ang/180/self.unitscale
+                    if length:
+                        self.launch_calc()
+                        self.calculator.putx(length)
 
     def launch_calc(self):
         if not self.calculator:
@@ -754,10 +749,6 @@ class PyurCad(tk.Tk):  # root = self
 
     def show_dir_self(self):
         pprint.pprint(dir(self))
-        self.end()
-
-    def show_op(self):
-        print(self.op)
         self.end()
 
     # =======================================================================
@@ -1501,9 +1492,9 @@ class PyurCad(tk.Tk):  # root = self
                 p3 = self.cp2ep(p3)
                 p2 = self.pt_stack[1]
                 p1 = self.pt_stack[0]
-                tuple = cr_from_3p(p1, p2, p3)
-                if tuple:   # tuple=None if p1, p2, p3 are colinear
-                    pc, r = tuple
+                tup = cr_from_3p(p1, p2, p3)
+                if tup:   # tup=None if p1, p2, p3 are colinear
+                    pc, r = tup
                     ang1 = p2p_angle(pc, p1)
                     ang2 = p2p_angle(pc, p2)
                     if not pt_on_RHS_p(p3, p1, p2):
@@ -2495,7 +2486,7 @@ class PyurCad(tk.Tk):  # root = self
             if not items and not self.sel_box_crnr:
                 self.sel_box_crnr = (x, y)
                 return
-            elif self.sel_box_crnr:
+            if self.sel_box_crnr:
                 x1, y1 = self.sel_box_crnr
                 items = self.canvas.find_enclosed(x1, y1, x, y)
                 self.sel_box_crnr = None
@@ -2663,7 +2654,7 @@ class PyurCad(tk.Tk):  # root = self
                 if x0 < u < x1 or x0 > u > x1 or y0 < v < y1 or y0 > v > y1:
                     return (u, v)
 
-        elif len(items) > 1:  # intersection found
+        if len(items) > 1:  # intersection found
             if self.canvas.type(items[0]) == 'line' and\
                self.canvas.type(items[1]) == 'line':
                 a, b, c, d = self.canvas.coords(items[0])
