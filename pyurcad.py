@@ -469,8 +469,8 @@ class PyurCad(tk.Tk):  # root = self
                  'feet': 304.8}
     units = 'mm'
     unitscale = unit_dict[units]
-    calculator = None
-    txtdialog = None
+    calculator = None   # reference to a Toplevel window
+    txtdialog = None    # reference to a Toplevel window
     popup = None
     msg = "Left-Click a tool button to start.  Middle-Click on screen to end."
 
@@ -2050,7 +2050,6 @@ class PyurCad(tk.Tk):  # root = self
             self.set_sel_mode('pnt')  # keep mouse_move calling func
             self.handle = self.obj_stack.pop()[0]
             self.obj_stack = []
-            print("handle of text to change: ", self.handle)
             ent = self.curr[self.handle]
             if ent.type is 'tx':
                 self.launch_txtdialog()
@@ -2060,7 +2059,6 @@ class PyurCad(tk.Tk):  # root = self
                 self.txtdialog.putt(ent.style)
                 self.txtdialog.coords = ent.coords
         elif self.modified_text_object:
-            print("new object: ", self.modified_text_object)
             try:
                 self.text_gen(self.modified_text_object)
                 self.canvas.delete(self.handle)
@@ -2075,6 +2073,7 @@ class PyurCad(tk.Tk):  # root = self
     def launch_txtdialog(self):
         if not self.txtdialog:
             self.txtdialog = txtdialog.TxtDialog(self)
+            self.txtdialog.grab_set()
             self.txtdialog.geometry('+1000+500')
 
     # =======================================================================
@@ -2313,6 +2312,8 @@ class PyurCad(tk.Tk):  # root = self
         kvlist = list(self.curr.items())
         for k, v in kvlist:
             if v == entity:
+                if entity.type is 'cl':
+                    self.cl_list.remove(entity.coords)
                 self.canvas.delete(k)
                 del self.curr[k]
 

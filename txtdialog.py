@@ -62,7 +62,6 @@ class TxtDialog(Toplevel):
 
     def sel_font(self, foo):
         self.putt(self.font.get())
-        print("Chosen font: ", self.font.get())
 
     def pr(self, val):
         pass
