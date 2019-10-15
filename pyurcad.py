@@ -38,8 +38,7 @@ def intersection(cline1, cline2):
     k = a*e-b*d
     if k:
         return (i/k, j/k)
-    else:
-        return None
+    return None
 
 
 def cnvrt_2pts_to_coef(pt1, pt2):
@@ -68,10 +67,7 @@ def pnt_in_box_p(pnt, box):
     '''Point in box predicate: Return True if pnt is in box.'''
     x, y = pnt
     x1, y1, x2, y2 = box
-    if x1 < x < x2 and y1 < y < y2:
-        return True
-    else:
-        return False
+    return bool(x1 < x < x2 and y1 < y < y2)
 
 
 def midpoint(p1, p2, f=.5):
@@ -145,10 +141,7 @@ def circ_circ_inters(x1, y1, r1, x2, y2, r2):
 
 def same_pt_p(p1, p2):
     '''Return True if p1 and p2 are within 1e-10 of each other.'''
-    if p2p_dist(p1, p2) < 1e-6:
-        return True
-    else:
-        return False
+    return bool(p2p_dist(p1, p2) < 1e-6)
 
 
 def cline_box_intrsctn(cline, box):
