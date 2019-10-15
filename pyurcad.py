@@ -2502,7 +2502,8 @@ class PyurCad(tk.Tk):  # root = self
                         self.obj_stack[-1].append(item)
 
     def mid_click(self, event):
-        self.end()
+        #self.end()
+        self.on_tool_bar_button_clicked(0)
 
     def rgt_click(self, event):
         '''Popup menu for view options.'''
