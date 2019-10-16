@@ -1657,13 +1657,18 @@ class PyurCad(tk.Tk):
                                 self.rubber_tx = entities.TX(old_attribs)
                                 self.rubber = self.text_draw(self.rubber_tx,
                                                              tag='r')
+                            else:
+                                self.obj_stack = []  # bad screen pick
             if self.rubber:
                 self.canvas.delete(self.rubber)
             if p:  # cursor coordinates supplied by mouse_move
                 p = self.cp2ep(p)  # coords of p are in CCS
-                self.rubber_tx.coords = p
-            self.rubber = self.text_draw(self.rubber_tx, tag='r')
-            self.update_message_bar('Pick new location for center of text')
+                try:
+                    self.rubber_tx.coords = p
+                except AttributeError:  # bad screen pick
+                    return
+                self.rubber = self.text_draw(self.rubber_tx, tag='r')
+                self.update_message_bar('Pick new location for center of text')
             self.set_sel_mode('pnt')
         elif self.pt_stack:
             newpoint = self.pt_stack.pop()
