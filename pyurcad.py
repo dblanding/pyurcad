@@ -438,7 +438,7 @@ class PyurCad(tk.Tk):  # root = self
     textsize = 10       # default text size
     textstyle = 'Calibri'   # default text style
     TEXTCOLOR = TEXTCOLOR
-    constr_dash = 2     # dash size for construction lines & circles
+    CONSTR_DASH = 2     # dash size for construction lines & circles
     modified_text_object = None
     cl_list = []        # list of all cline coords (so they don't get lost)
     shift_key_advice = ' (Use SHIFT key to select center of element)'
@@ -749,7 +749,7 @@ class PyurCad(tk.Tk):  # root = self
         start_x, start_y = self.ep2cp((-100, -100))
         end_x, end_y = self.ep2cp((400, 400))
         self.wp = self.canvas.create_rectangle(
-            start_x, start_y, end_x, end_y, fill='#d5ffd5', outline=None)
+            start_x, start_y, end_x, end_y, outline='#d5ffd5', fill=None, width=20)
 
     # =======================================================================
     # Construction
@@ -779,14 +779,14 @@ class PyurCad(tk.Tk):  # root = self
                                                           p2[0], p2[1],
                                                           fill=CONSTRCOLOR,
                                                           tags='r',
-                                                          dash=self.constr_dash)
+                                                          dash=self.CONSTR_DASH)
             else:
                 if self.rubber:
                     self.canvas.delete(self.rubber)
                     self.rubber = None
                 handle = self.canvas.create_line(p1[0], p1[1], p2[0], p2[1],
                                                  fill=CONSTRCOLOR, tags='c',
-                                                 dash=self.constr_dash)
+                                                 dash=self.CONSTR_DASH)
                 self.canvas.tag_lower(handle)
                 attribs = (cline, CONSTRCOLOR)
                 e = entities.CL(attribs)
@@ -1337,7 +1337,7 @@ class PyurCad(tk.Tk):  # root = self
         The caller should save handle & entity_obj to self.curr if needed."""
 
         if tag == 'c':
-            dash = self.constr_dash
+            dash = self.CONSTR_DASH
         else:
             dash = None
         ctr, rad = coords
@@ -2813,6 +2813,8 @@ class PyurCad(tk.Tk):  # root = self
                                    command=lambda k="show_dir_self": self.dispatch(k))
         self.debugmenu.add_command(label="draw Workplane",
                                    command=self.draw_workplane)
+        self.debugmenu.add_command(label="Launch Cube",
+                                   command=self.launch_cube)
         self.menubar.add_cascade(label="Debug", menu=self.debugmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
@@ -2900,6 +2902,85 @@ class PyurCad(tk.Tk):  # root = self
                 underline = None
             menu.add_command(label=menu_label, underline=underline,
                              accelerator=accelrator_key, command=eval(command_callback))
+
+    # =======================================================================
+    # Rotating Cube
+    # =======================================================================
+
+    def transpose_matrix(self, matrix):
+        return list(zip(*matrix))
+
+    def translate_vector(self, x, y, dx, dy):
+        return x + dx, y + dy
+
+    def matrix_multiply(self, matrix_a, matrix_b):
+        zip_b = list(zip(*matrix_b))
+        return [[
+            sum(ele_a * ele_b for ele_a, ele_b in zip(row_a, col_b))
+            for col_b in zip_b
+            ] for row_a in matrix_a]
+
+    def rotate_along_x(self, x, shape):
+        return self.matrix_multiply(
+            [[1, 0, 0], [0, math.cos(x), -math.sin(x)],
+             [0, math.sin(x), math.cos(x)]], shape)
+
+    def rotate_along_y(self, y, shape):
+        return self.matrix_multiply(
+            [[math.cos(y), 0, math.sin(y)], [0, 1, 0],
+             [-math.sin(y), 0, math.cos(y)]], shape)
+
+    def rotate_along_z(self, z, shape):
+        return self.matrix_multiply(
+            [[math.cos(z), math.sin(z), 0],
+             [-math.sin(z), math.cos(z), 0], [0, 0, 1]], shape)
+
+    last_x = 0
+    last_y = 0
+
+    def launch_cube(self):
+        self.init_data()
+        self.draw_cube()
+        self.bind_mouse_buttons()
+        #self.continually_rotate()
+        self.epsilon = lambda d: d * 0.01
+
+    def init_data(self):
+        self.cube = self.transpose_matrix(
+            [[-100, -100, -100], [-100, 100, -100], [-100, -100, 100 ],
+             [-100, 100, 100],  [100, -100, -100], [100, 100, -100],
+             [100, -100, 100], [100, 100, 100]])
+
+    def bind_mouse_buttons(self):
+        self.canvas.bind("<Button-2>", self.on_mouse_clicked)
+        self.canvas.bind("<B2-Motion>", self.on_mouse_motion)
+
+    def draw_cube(self):
+        cube_points = [
+            [0, 1, 2, 4], [3, 1, 2, 7], [5, 1, 4, 7], [6, 2, 4, 7]]
+        w = self.canvas.winfo_width() / 2
+        h = self.canvas.winfo_height() / 2
+        self.canvas.delete(tk.ALL)
+        for i in cube_points:
+            for j in i:
+                self.canvas.create_line(
+                    self.translate_vector(
+                        self.cube[0][i[0]], self.cube[1][i[0]], w, h),
+                    self.translate_vector(
+                        self.cube[0][j], self.cube[1][j], w, h),
+                    fill=GEOMCOLOR)
+
+    def on_mouse_clicked(self, event):
+        self.last_x = event.x
+        self.last_y = event.y
+
+    def on_mouse_motion(self, event):
+        dx = self.last_y - event.y
+        self.cube = self.rotate_along_x(self.epsilon(-dx), self.cube)
+        dy = self.last_x - event.x
+        self.cube = self.rotate_along_y(self.epsilon(dy), self.cube)
+        self.draw_cube()
+        self.on_mouse_clicked(event)
 
 
 if __name__ == '__main__':
