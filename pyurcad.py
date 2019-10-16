@@ -1,5 +1,5 @@
 """
-PyurCad = Pure CAD in the sense that it uses only Python3 and the standard
+PyurCad is Pure CAD in the sense that it uses only Python3 and the standard
 libraries that come with it. It is a rewrite of cadvas without the use of
 Python MegaWidgets.
 """
@@ -12,6 +12,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
 import entities
+import geometryhelpers as gh
 import tkrpncalc
 import txtdialog
 from zooming import Zooming
@@ -22,355 +23,8 @@ TEXTCOLOR = 'cyan'      # color of text entities
 DIMCOLOR = 'red'        # color of dimension entities
 RUBBERCOLOR = 'yellow'  # color of (temporary) rubber elements
 
-# ===========================================================================
-#
-# Math & geometry utility functions
-#
-# ===========================================================================
 
-
-def intersection(cline1, cline2):
-    """Return intersection (x,y) of 2 clines expressed as (a,b,c) coeff."""
-    a, b, c = cline1
-    d, e, f = cline2
-    i = b*f-c*e
-    j = c*d-a*f
-    k = a*e-b*d
-    if k:
-        return (i/k, j/k)
-    return None
-
-
-def cnvrt_2pts_to_coef(pt1, pt2):
-    """Return (a,b,c) coefficients of cline defined by 2 (x,y) pts."""
-    x1, y1 = pt1
-    x2, y2 = pt2
-    a = y2 - y1
-    b = x1 - x2
-    c = x2*y1-x1*y2
-    return (a, b, c)
-
-
-def proj_pt_on_line(cline, pt):
-    """Return point which is the projection of pt on cline."""
-    a, b, c = cline
-    x, y = pt
-    denom = a**2 + b**2
-    if not denom:
-        return pt
-    xp = (b**2 * x - a*b*y - a*c) / denom
-    yp = (a**2 * y - a*b*x - b*c) / denom
-    return (xp, yp)
-
-
-def pnt_in_box_p(pnt, box):
-    '''Point in box predicate: Return True if pnt is in box.'''
-    x, y = pnt
-    x1, y1, x2, y2 = box
-    return bool(x1 < x < x2 and y1 < y < y2)
-
-
-def midpoint(p1, p2, f=.5):
-    """Return point part way (f=.5 by def) between points p1 and p2."""
-    return (((p2[0]-p1[0])*f)+p1[0], ((p2[1]-p1[1])*f)+p1[1])
-
-
-def p2p_dist(p1, p2):
-    """Return the distance between two points"""
-    x, y = p1
-    u, v = p2
-    return math.sqrt((x-u)**2 + (y-v)**2)
-
-
-def p2p_angle(p0, p1):
-    """Return angle (degrees) from p0 to p1."""
-    return math.atan2(p1[1]-p0[1], p1[0]-p0[0])*180/math.pi
-
-
-def add_pt(p0, p1):
-    return (p0[0]+p1[0], p0[1]+p1[1])
-
-
-def sub_pt(p0, p1):
-    return (p0[0]-p1[0], p0[1]-p1[1])
-
-
-def line_circ_inters(x1, y1, x2, y2, xc, yc, r):
-    '''Return list of intersection pts of line defined by pts x1,y1 and x2,y2
-    and circle (cntr xc,yc and radius r).
-    Uses algorithm from Paul Bourke's web page.'''
-    intpnts = []
-    num = (xc - x1)*(x2 - x1) + (yc - y1)*(y2 - y1)
-    denom = (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1)
-    if denom == 0:
-        return
-    u = num / denom
-    xp = x1 + u*(x2-x1)
-    yp = y1 + u*(y2-y1)
-
-    a = (x2 - x1)**2 + (y2 - y1)**2
-    b = 2*((x2-x1)*(x1-xc) + (y2-y1)*(y1-yc))
-    c = xc**2+yc**2+x1**2+y1**2-2*(xc*x1+yc*y1)-r**2
-    q = b**2 - 4*a*c
-    if q == 0:
-        intpnts.append((xp, yp))
-    elif q:
-        u1 = (-b+math.sqrt(abs(q)))/(2*a)
-        u2 = (-b-math.sqrt(abs(q)))/(2*a)
-        intpnts.append(((x1 + u1*(x2-x1)), (y1 + u1*(y2-y1))))
-        intpnts.append(((x1 + u2*(x2-x1)), (y1 + u2*(y2-y1))))
-    return intpnts
-
-
-def circ_circ_inters(x1, y1, r1, x2, y2, r2):
-    '''Return list of intersection pts of 2 circles.
-    Uses algorithm from Robert S. Wilson's web page.'''
-    pts = []
-    D = (x2-x1)**2 + (y2-y1)**2
-    if not D:
-        return pts  # circles have same cntr; no intersection
-    q = math.sqrt(abs(((r1+r2)**2-D)*(D-(r2-r1)**2)))
-    pts = [((x2+x1)/2+(x2-x1)*(r1**2-r2**2)/(2*D)+(y2-y1)*q/(2*D),
-            (y2+y1)/2+(y2-y1)*(r1**2-r2**2)/(2*D)-(x2-x1)*q/(2*D)),
-           ((x2+x1)/2+(x2-x1)*(r1**2-r2**2)/(2*D)-(y2-y1)*q/(2*D),
-            (y2+y1)/2+(y2-y1)*(r1**2-r2**2)/(2*D)+(x2-x1)*q/(2*D))]
-    if same_pt_p(pts[0], pts[1]):
-        pts.pop()   # circles are tangent
-    return pts
-
-
-def same_pt_p(p1, p2):
-    '''Return True if p1 and p2 are within 1e-10 of each other.'''
-    return bool(p2p_dist(p1, p2) < 1e-6)
-
-
-def cline_box_intrsctn(cline, box):
-    """Return tuple of pts where line intersects edges of box."""
-    x0, y0, x1, y1 = box
-    pts = []
-    segments = [((x0, y0), (x1, y0)),
-                ((x1, y0), (x1, y1)),
-                ((x1, y1), (x0, y1)),
-                ((x0, y1), (x0, y0))]
-    for seg in segments:
-        pt = intersection(cline, cnvrt_2pts_to_coef(seg[0], seg[1]))
-        if pt:
-            if p2p_dist(pt, seg[0]) <= p2p_dist(seg[0], seg[1]) and \
-               p2p_dist(pt, seg[1]) <= p2p_dist(seg[0], seg[1]):
-                if pt not in pts:
-                    pts.append(pt)
-    return tuple(pts)
-
-
-def para_line(cline, pt):
-    """Return coeff of newline thru pt and parallel to cline."""
-    a, b, c = cline
-    x, y = pt
-    cnew = -(a*x + b*y)
-    return (a, b, cnew)
-
-
-def para_lines(cline, d):
-    """Return 2 parallel lines straddling line, offset d."""
-    a, b, c = cline
-    c1 = math.sqrt(a**2 + b**2)*d
-    cline1 = (a, b, c + c1)
-    cline2 = (a, b, c - c1)
-    return (cline1, cline2)
-
-
-def perp_line(cline, pt):
-    """Return coeff of newline thru pt and perpend to cline."""
-    a, b, c = cline
-    x, y = pt
-    cnew = a*y - b*x
-    return (b, -a, cnew)
-
-
-def closer(p0, p1, p2):
-    """Return closer of p1 or p2 to point p0."""
-    d1 = (p1[0] - p0[0])**2 + (p1[1] - p0[1])**2
-    d2 = (p2[0] - p0[0])**2 + (p2[1] - p0[1])**2
-    if d1 < d2:
-        return p1
-    return p2
-
-
-def farther(p0, p1, p2):
-    """Return farther of p1 or p2 from point p0."""
-    d1 = (p1[0] - p0[0])**2 + (p1[1] - p0[1])**2
-    d2 = (p2[0] - p0[0])**2 + (p2[1] - p0[1])**2
-    if d1 > d2:
-        return p1
-    return p2
-
-
-def find_fillet_pts(r, commonpt, end1, end2):
-    """Return ctr of fillet (radius r) and tangent pts for corner
-    defined by a common pt, and two adjacent corner pts."""
-    line1 = cnvrt_2pts_to_coef(commonpt, end1)
-    line2 = cnvrt_2pts_to_coef(commonpt, end2)
-    # find 'interior' clines
-    cl1a, cl1b = para_lines(line1, r)
-    p2a = proj_pt_on_line(cl1a, end2)
-    p2b = proj_pt_on_line(cl1b, end2)
-    da = p2p_dist(p2a, end2)
-    db = p2p_dist(p2b, end2)
-    if da <= db:
-        cl1 = cl1a
-    else:
-        cl1 = cl1b
-    cl2a, cl2b = para_lines(line2, r)
-    p1a = proj_pt_on_line(cl2a, end1)
-    p1b = proj_pt_on_line(cl2b, end1)
-    da = p2p_dist(p1a, end1)
-    db = p2p_dist(p1b, end1)
-    if da <= db:
-        cl2 = cl2a
-    else:
-        cl2 = cl2b
-    pc = intersection(cl1, cl2)
-    p1 = proj_pt_on_line(line1, pc)
-    p2 = proj_pt_on_line(line2, pc)
-    return (pc, p1, p2)
-
-
-def find_common_pt(apair, bpair):
-    """Return (common pt, other pt from a, other pt from b), where a and b
-    are coordinate pt pairs in (p1, p2) format."""
-    p0, p1 = apair
-    p2, p3 = bpair
-    if same_pt_p(p0, p2):
-        cp = p0     # common pt
-        opa = p1    # other pt a
-        opb = p3    # other pt b
-    elif same_pt_p(p0, p3):
-        cp = p0
-        opa = p1
-        opb = p2
-    elif same_pt_p(p1, p2):
-        cp = p1
-        opa = p0
-        opb = p3
-    elif same_pt_p(p1, p3):
-        cp = p1
-        opa = p0
-        opb = p2
-    else:
-        return
-    return (cp, opa, opb)
-
-
-def cr_from_3p(p1, p2, p3):
-    """Return ctr pt and radius of circle on which 3 pts reside.
-    From Paul Bourke's web page."""
-    chord1 = cnvrt_2pts_to_coef(p1, p2)
-    chord2 = cnvrt_2pts_to_coef(p2, p3)
-    radial_line1 = perp_line(chord1, midpoint(p1, p2))
-    radial_line2 = perp_line(chord2, midpoint(p2, p3))
-    ctr = intersection(radial_line1, radial_line2)
-    if ctr:
-        radius = p2p_dist(p1, ctr)
-        return (ctr, radius)
-
-
-def extendline(p0, p1, d):
-    """Return point which lies on extension of line segment p0-p1,
-    beyond p1 by distance d."""
-    pts = line_circ_inters(p0[0], p0[1], p1[0], p1[1], p1[0], p1[1], d)
-    if pts:
-        return farther(p0, pts[0], pts[1])
-    return
-
-
-def shortenline(p0, p1, d):
-    """Return point which lies on line segment p0-p1,
-    short of p1 by distance d."""
-    pts = line_circ_inters(p0[0], p0[1], p1[0], p1[1], p1[0], p1[1], d)
-    if pts:
-        return closer(p0, pts[0], pts[1])
-    return
-
-
-def line_tan_to_circ(circ, p):
-    """Return tan pts on circ of line through p."""
-    c, r = circ
-    d = p2p_dist(c, p)
-    ang0 = p2p_angle(c, p)*math.pi/180
-    theta = math.asin(r/d)
-    ang1 = ang0+math.pi/2-theta
-    ang2 = ang0-math.pi/2+theta
-    p1 = (c[0]+(r*math.cos(ang1)), c[1]+(r*math.sin(ang1)))
-    p2 = (c[0]+(r*math.cos(ang2)), c[1]+(r*math.sin(ang2)))
-    return (p1, p2)
-
-
-def line_tan_to_2circs(circ1, circ2):
-    """Return tangent pts on line tangent to 2 circles.
-    Order of circle picks determines which tangent line."""
-    c1, r1 = circ1
-    c2, r2 = circ2
-    d = p2p_dist(c1, c2)    # distance between centers
-    ang_loc = p2p_angle(c2, c1)*math.pi/180  # angle of line of centers
-    f = (r2/r1-1)/d  # reciprocal dist from c1 to intersection of loc & tan line
-    theta = math.asin(r1*f)    # angle between loc and tangent line
-    ang1 = (ang_loc + math.pi/2 - theta)
-    # ang2 = (ang_loc - math.pi/2 + theta)  # unused
-    p1 = (c1[0]+(r1*math.cos(ang1)), c1[1]+(r1*math.sin(ang1)))
-    p2 = (c2[0]+(r2*math.cos(ang1)), c2[1]+(r2*math.sin(ang1)))
-    return (p1, p2)
-
-
-def angled_cline(pt, angle):
-    """Return cline through pt at angle (degrees)"""
-    ang = angle * math.pi / 180
-    dx = math.cos(ang)
-    dy = math.sin(ang)
-    p2 = (pt[0]+dx, pt[1]+dy)
-    cline = cnvrt_2pts_to_coef(pt, p2)
-    return cline
-
-
-def ang_bisector(p0, p1, p2, f=0.5):
-    """Return cline coefficients of line through vertex p0, factor=f
-    between p1 and p2."""
-    ang1 = math.atan2(p1[1]-p0[1], p1[0]-p0[0])
-    ang2 = math.atan2(p2[1]-p0[1], p2[0]-p0[0])
-    deltang = ang2 - ang1
-    ang3 = (f * deltang + ang1)*180/math.pi
-    return angled_cline(p0, ang3)
-
-
-def pt_on_RHS_p(pt, p0, p1):
-    """Return True if pt is on right hand side going from p0 to p1."""
-    angline = p2p_angle(p0, p1)
-    angpt = p2p_angle(p0, pt)
-    if angline >= 0:
-        if angline > angpt > angline-180:
-            return True
-    else:
-        angline += 360
-        if angpt < 0:
-            angpt += 360
-        if angline > angpt > angline-180:
-            return True
-
-
-def rotate_pt(pt, ang, ctr):
-    """Return coordinates of pt rotated ang (deg) CCW about ctr.
-
-    This is a 3-step process:
-    1. translate to place ctr at origin.
-    2. rotate about origin (CCW version of Paul Bourke's algorithm.
-    3. apply inverse translation. """
-    x, y = sub_pt(pt, ctr)
-    A = ang * math.pi / 180
-    u = x * math.cos(A) - y * math.sin(A)
-    v = y * math.cos(A) + x * math.sin(A)
-    return add_pt((u, v), ctr)
-
-
-class PyurCad(tk.Tk):  # root = self
+class PyurCad(tk.Tk):
 
     tool_bar_function_names = {'noop': "No Current Operation",
                                'hvcl': "Horizontal & Vertical Construction Line",
@@ -643,7 +297,7 @@ class PyurCad(tk.Tk):  # root = self
         elif len(self.pt_stack) > 1:
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
-            dist = p2p_dist(p1, p2)/self.unitscale
+            dist = gh.p2p_dist(p1, p2)/self.unitscale
             self.update_message_bar('%s %s' % (dist, self.units))
             self.launch_calc()
             self.calculator.putx(dist)
@@ -674,7 +328,7 @@ class PyurCad(tk.Tk):  # root = self
                     elem = self.curr[item]
                     if elem.type is 'gl':
                         p1, p2 = elem.coords
-                        length = p2p_dist(p1, p2) / self.unitscale
+                        length = gh.p2p_dist(p1, p2) / self.unitscale
                     elif elem.type is 'gc':
                         length = math.pi*2*elem.coords[1]/self.unitscale
                     elif elem.type is 'cc':
@@ -767,7 +421,7 @@ class PyurCad(tk.Tk):  # root = self
         toplft = self.cp2ep((-500, -500))
         botrgt = self.cp2ep((w+500, h+500))
         trimbox = (toplft[0], toplft[1], botrgt[0], botrgt[1])
-        endpts = cline_box_intrsctn(cline, trimbox)
+        endpts = gh.cline_box_intrsctn(cline, trimbox)
         if len(endpts) == 2:
             p1 = self.ep2cp(endpts[0])
             p2 = self.ep2cp(endpts[1])
@@ -826,10 +480,10 @@ class PyurCad(tk.Tk):  # root = self
             proceed = 1
         elif pnt:
             p = self.cp2ep(pnt)
-            cline = angled_cline(p, 0)
+            cline = gh.angled_cline(p, 0)
             self.cline_gen(cline, rubber=1)
         if proceed:
-            cline = angled_cline(p, 0)
+            cline = gh.angled_cline(p, 0)
             self.cline_gen(cline)
 
     def vcl(self, pnt=None):
@@ -848,10 +502,10 @@ class PyurCad(tk.Tk):  # root = self
             proceed = 1
         elif pnt:
             p = self.cp2ep(pnt)
-            cline = angled_cline(p, 90)
+            cline = gh.angled_cline(p, 90)
             self.cline_gen(cline, rubber=1)
         if proceed:
-            cline = angled_cline(p, 90)
+            cline = gh.angled_cline(p, 90)
             self.cline_gen(cline)
 
     def hvcl(self, pnt=None):
@@ -862,8 +516,8 @@ class PyurCad(tk.Tk):  # root = self
         self.update_message_bar(message)
         if self.pt_stack:
             p = self.pt_stack.pop()
-            self.cline_gen(angled_cline(p, 0))
-            self.cline_gen(angled_cline(p, 90))
+            self.cline_gen(gh.angled_cline(p, 0))
+            self.cline_gen(gh.angled_cline(p, 90))
 
     def acl(self, pnt=None):
         """Create construction line thru a point, at a specified angle."""
@@ -875,12 +529,12 @@ class PyurCad(tk.Tk):  # root = self
         elif self.pt_stack and self.float_stack:
             p0 = self.pt_stack[0]
             ang = self.float_stack.pop()
-            cline = angled_cline(p0, ang)
+            cline = gh.angled_cline(p0, ang)
             self.cline_gen(cline)
         elif len(self.pt_stack) > 1:
             p0 = self.pt_stack[0]
             p1 = self.pt_stack.pop()
-            cline = cnvrt_2pts_to_coef(p0, p1)
+            cline = gh.cnvrt_2pts_to_coef(p0, p1)
             self.cline_gen(cline)
         elif self.pt_stack and not self.float_stack:
             message = 'Specify 2nd point or enter angle in degrees'
@@ -889,8 +543,8 @@ class PyurCad(tk.Tk):  # root = self
             if pnt:
                 p0 = self.pt_stack[0]
                 p1 = self.cp2ep(pnt)
-                ang = p2p_angle(p0, p1)
-                cline = angled_cline(p0, ang)
+                ang = gh.p2p_angle(p0, p1)
+                cline = gh.angled_cline(p0, ang)
                 self.cline_gen(cline, rubber=1)
 
     def clrefang(self, p3=None):
@@ -914,10 +568,10 @@ class PyurCad(tk.Tk):  # root = self
             p3 = self.pt_stack.pop()
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
-            baseangle = p2p_angle(p2, p3)
+            baseangle = gh.p2p_angle(p2, p3)
             angoffset = self.float_stack.pop()
             ang = baseangle + angoffset
-            cline = angled_cline(p1, ang)
+            cline = gh.angled_cline(p1, ang)
             self.cline_gen(cline)
 
     def abcl(self, pnt=None):
@@ -942,7 +596,7 @@ class PyurCad(tk.Tk):  # root = self
                 p2 = self.cp2ep(pnt)
                 p1 = self.pt_stack[-1]
                 p0 = self.pt_stack[-2]
-                cline = ang_bisector(p0, p1, p2, f)
+                cline = gh.ang_bisector(p0, p1, p2, f)
                 self.cline_gen(cline, rubber=1)
         elif len(self.pt_stack) == 3:
             f = .5
@@ -951,7 +605,7 @@ class PyurCad(tk.Tk):  # root = self
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
             p0 = self.pt_stack.pop()
-            cline = ang_bisector(p0, p1, p2, f)
+            cline = gh.ang_bisector(p0, p1, p2, f)
             self.cline_gen(cline)
 
     def lbcl(self, pnt=None):
@@ -975,9 +629,9 @@ class PyurCad(tk.Tk):  # root = self
                     f = self.float_stack[-1]
                 p2 = self.cp2ep(pnt)
                 p1 = self.pt_stack[-1]
-                p0 = midpoint(p1, p2, f)
-                baseline = cnvrt_2pts_to_coef(p1, p2)
-                newline = perp_line(baseline, p0)
+                p0 = gh.midpoint(p1, p2, f)
+                baseline = gh.cnvrt_2pts_to_coef(p1, p2)
+                newline = gh.perp_line(baseline, p0)
                 self.cline_gen(newline, rubber=1)
         elif len(self.pt_stack) == 2:
             f = .5
@@ -985,9 +639,9 @@ class PyurCad(tk.Tk):  # root = self
                 f = self.float_stack[-1]
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
-            p0 = midpoint(p1, p2, f)
-            baseline = cnvrt_2pts_to_coef(p1, p2)
-            newline = perp_line(baseline, p0)
+            p0 = gh.midpoint(p1, p2, f)
+            baseline = gh.cnvrt_2pts_to_coef(p1, p2)
+            newline = gh.perp_line(baseline, p0)
             self.cline_gen(newline)
 
     def parcl(self, pnt=None):
@@ -1018,13 +672,13 @@ class PyurCad(tk.Tk):  # root = self
                         baseline = self.curr[item].coords
                     elif 'g' in self.canvas.gettags(item):
                         p1, p2 = self.curr[item].coords
-                        baseline = cnvrt_2pts_to_coef(p1, p2)
+                        baseline = gh.cnvrt_2pts_to_coef(p1, p2)
                 d = self.float_stack[-1]*self.unitscale
-                cline1, cline2 = para_lines(baseline, d)
-                p1 = proj_pt_on_line(cline1, p)
-                p2 = proj_pt_on_line(cline2, p)
-                d1 = p2p_dist(p1, p)
-                d2 = p2p_dist(p2, p)
+                cline1, cline2 = gh.para_lines(baseline, d)
+                p1 = gh.proj_pt_on_line(cline1, p)
+                p2 = gh.proj_pt_on_line(cline2, p)
+                d1 = gh.p2p_dist(p1, p)
+                d2 = gh.p2p_dist(p2, p)
                 if d1 < d2:
                     self.cline_gen(cline1)
                 else:
@@ -1040,7 +694,7 @@ class PyurCad(tk.Tk):  # root = self
                     baseline = self.curr[item].coords
                 elif 'g' in self.canvas.gettags(item):
                     p1, p2 = self.curr[item].coords
-                    baseline = cnvrt_2pts_to_coef(p1, p2)
+                    baseline = gh.cnvrt_2pts_to_coef(p1, p2)
             if not self.pt_stack:
                 self.set_sel_mode('pnt')
                 message = 'Select point for new parallel line'
@@ -1048,11 +702,11 @@ class PyurCad(tk.Tk):  # root = self
                 self.update_message_bar(message)
                 if pnt:
                     p = self.cp2ep(pnt)
-                    parline = para_line(baseline, p)
+                    parline = gh.para_line(baseline, p)
                     self.cline_gen(parline, rubber=1)
             else:
                 p = self.pt_stack.pop()
-                newline = para_line(baseline, p)
+                newline = gh.para_line(baseline, p)
                 self.cline_gen(newline)
 
     def perpcl(self, pnt=None):
@@ -1076,15 +730,15 @@ class PyurCad(tk.Tk):  # root = self
                     baseline = self.curr[item].coords
                 elif 'g' in self.canvas.gettags(item):
                     p1, p2 = self.curr[item].coords
-                    baseline = cnvrt_2pts_to_coef(p1, p2)
+                    baseline = gh.cnvrt_2pts_to_coef(p1, p2)
             if self.pt_stack:
                 p = self.pt_stack.pop()
-                newline = perp_line(baseline, p)
+                newline = gh.perp_line(baseline, p)
                 self.cline_gen(newline)
                 self.obj_stack.pop()
             elif pnt:
                 p = self.cp2ep(pnt)
-                newline = perp_line(baseline, p)
+                newline = gh.perp_line(baseline, p)
                 self.cline_gen(newline, rubber=1)
 
     def cltan1(self, p1=None):
@@ -1103,9 +757,9 @@ class PyurCad(tk.Tk):  # root = self
             if self.curr[item].type in ('gc', 'cc'):
                 circ = self.curr[item].coords
             if circ:
-                p1, p2 = line_tan_to_circ(circ, p)
-                cline1 = cnvrt_2pts_to_coef(p1, p)
-                cline2 = cnvrt_2pts_to_coef(p2, p)
+                p1, p2 = gh.line_tan_to_circ(circ, p)
+                cline1 = gh.cnvrt_2pts_to_coef(p1, p)
+                cline2 = gh.cnvrt_2pts_to_coef(p2, p)
                 self.cline_gen(cline1)
                 self.cline_gen(cline2)
 
@@ -1126,8 +780,8 @@ class PyurCad(tk.Tk):  # root = self
             if self.curr[item2].type in ('gc', 'cc'):
                 circ2 = self.curr[item2].coords
             if circ1 and circ2:
-                p1, p2 = line_tan_to_2circs(circ1, circ2)
-                cline = cnvrt_2pts_to_coef(p1, p2)
+                p1, p2 = gh.line_tan_to_2circs(circ1, circ2)
+                cline = gh.cnvrt_2pts_to_coef(p1, p2)
                 self.cline_gen(cline)
 
     def ccirc_gen(self, cc, tag='c'):
@@ -1162,7 +816,7 @@ class PyurCad(tk.Tk):  # root = self
             if self.coords and p1:
                 pc, r0 = self.coords
                 ep = self.cp2ep(p1)
-                r = p2p_dist(pc, ep)
+                r = gh.p2p_dist(pc, ep)
                 self.circ_builder((pc, r), rubber=1)
         elif self.coords and self.float_stack:
             pc, r0 = self.coords
@@ -1173,7 +827,7 @@ class PyurCad(tk.Tk):  # root = self
             pc, r0 = self.coords
             self.obj_stack.pop()
             p = self.pt_stack.pop()
-            r = p2p_dist(pc, p)
+            r = gh.p2p_dist(pc, p)
             self.circ_builder((pc, r), constr=1)
 
     def cc3p(self, p3=None):
@@ -1189,7 +843,7 @@ class PyurCad(tk.Tk):  # root = self
                 p3 = self.cp2ep(p3)
                 p2 = self.pt_stack[1]
                 p1 = self.pt_stack[0]
-                tup = cr_from_3p(p1, p2, p3)
+                tup = gh.cr_from_3p(p1, p2, p3)
                 if tup:
                     pc, r = tup
                     self.circ_builder((pc, r,), rubber=1)
@@ -1197,7 +851,7 @@ class PyurCad(tk.Tk):  # root = self
             p3 = self.pt_stack.pop()
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
-            pc, r = cr_from_3p(p1, p2, p3)
+            pc, r = gh.cr_from_3p(p1, p2, p3)
             self.circ_builder((pc, r), constr=1)
 
     # =======================================================================
@@ -1281,7 +935,7 @@ class PyurCad(tk.Tk):  # root = self
         elif len(self.pt_stack) > 1:
             lastpt = self.pt_stack[-1]
             self.line()     # This will pop 2 points off stack
-            if not same_pt_p(self.poly_start_pt, lastpt):
+            if not gh.same_pt_p(self.poly_start_pt, lastpt):
                 self.pt_stack.append(lastpt)
         elif self.pt_stack and p1:
             if not self.poly_start_pt:
@@ -1395,13 +1049,13 @@ class PyurCad(tk.Tk):  # root = self
             self.update_message_bar('Specify point on circle or radius')
             pc = self.pt_stack[0]
             p1 = self.cp2ep(p1)
-            r = p2p_dist(pc, p1)
+            r = gh.p2p_dist(pc, p1)
             coords = (pc, r)
             self.circ_builder(coords, rubber=1)
         elif len(self.pt_stack) > 1:
             p1 = self.pt_stack.pop()
             pc = self.pt_stack.pop()
-            r = p2p_dist(pc, p1)
+            r = gh.p2p_dist(pc, p1)
             finish = 1
         elif self.pt_stack and self.float_stack:
             pc = self.pt_stack.pop()
@@ -1466,9 +1120,9 @@ class PyurCad(tk.Tk):  # root = self
                 p2 = self.cp2ep(p2)
                 p1 = self.pt_stack[1]
                 p0 = self.pt_stack[0]
-                r = p2p_dist(p0, p1)
-                ang1 = p2p_angle(p0, p1)
-                ang2 = p2p_angle(p0, p2)
+                r = gh.p2p_dist(p0, p1)
+                ang1 = gh.p2p_angle(p0, p1)
+                ang2 = gh.p2p_angle(p0, p2)
                 coords = (p0, r, ang1, ang2)
                 attribs = (coords, RUBBERCOLOR)
                 e = entities.GA(attribs)
@@ -1477,9 +1131,9 @@ class PyurCad(tk.Tk):  # root = self
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
             p0 = self.pt_stack.pop()
-            r = p2p_dist(p0, p1)
-            ang1 = p2p_angle(p0, p1)
-            ang2 = p2p_angle(p0, p2)
+            r = gh.p2p_dist(p0, p1)
+            ang1 = gh.p2p_angle(p0, p1)
+            ang2 = gh.p2p_angle(p0, p2)
             coords = (p0, r, ang1, ang2)
             attribs = (coords, GEOMCOLOR)
             e = entities.GA(attribs)
@@ -1498,12 +1152,12 @@ class PyurCad(tk.Tk):  # root = self
                 p3 = self.cp2ep(p3)
                 p2 = self.pt_stack[1]
                 p1 = self.pt_stack[0]
-                tup = cr_from_3p(p1, p2, p3)
+                tup = gh.cr_from_3p(p1, p2, p3)
                 if tup:   # tup=None if p1, p2, p3 are colinear
                     pc, r = tup
-                    ang1 = p2p_angle(pc, p1)
-                    ang2 = p2p_angle(pc, p2)
-                    if not pt_on_RHS_p(p3, p1, p2):
+                    ang1 = gh.p2p_angle(pc, p1)
+                    ang2 = gh.p2p_angle(pc, p2)
+                    if not gh.pt_on_RHS_p(p3, p1, p2):
                         ang2, ang1 = ang1, ang2
                     coords = (pc, r, ang1, ang2)
                     attribs = (coords, RUBBERCOLOR)
@@ -1513,10 +1167,10 @@ class PyurCad(tk.Tk):  # root = self
             p3 = self.pt_stack.pop()
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
-            pc, r = cr_from_3p(p1, p2, p3)
-            ang1 = p2p_angle(pc, p1)
-            ang2 = p2p_angle(pc, p2)
-            if not pt_on_RHS_p(p3, p1, p2):
+            pc, r = gh.cr_from_3p(p1, p2, p3)
+            ang1 = gh.p2p_angle(pc, p1)
+            ang2 = gh.p2p_angle(pc, p2)
+            if not gh.pt_on_RHS_p(p3, p1, p2):
                 ang2, ang1 = ang1, ang2
             coords = (pc, r, ang1, ang2)
             attribs = (coords, GEOMCOLOR)
@@ -1537,20 +1191,20 @@ class PyurCad(tk.Tk):  # root = self
             p2 = self.pt_stack.pop()
             p1 = self.pt_stack.pop()
             w = self.float_stack.pop()*self.unitscale
-            baseline = cnvrt_2pts_to_coef(p1, p2)
-            crossline1 = perp_line(baseline, p1)
-            crossline2 = perp_line(baseline, p2)
+            baseline = gh.cnvrt_2pts_to_coef(p1, p2)
+            crossline1 = gh.perp_line(baseline, p1)
+            crossline2 = gh.perp_line(baseline, p2)
             circ1 = (p1, w/2)
             circ2 = (p2, w/2)
-            p1e = extendline(p2, p1, w/2)
-            paraline1, paraline2 = para_lines(baseline, w/2)
-            p1a = intersection(paraline1, crossline1)
-            p1b = intersection(paraline2, crossline1)
+            p1e = gh.extendline(p2, p1, w/2)
+            paraline1, paraline2 = gh.para_lines(baseline, w/2)
+            p1a = gh.intersection(paraline1, crossline1)
+            p1b = gh.intersection(paraline2, crossline1)
             self.pt_stack.extend([p1a, p1b, p1e])
             self.arc3p()
-            p2e = extendline(p1, p2, w/2)
-            p2a = intersection(paraline1, crossline2)
-            p2b = intersection(paraline2, crossline2)
+            p2e = gh.extendline(p1, p2, w/2)
+            p2a = gh.intersection(paraline1, crossline2)
+            p2b = gh.intersection(paraline2, crossline2)
             self.pt_stack.extend([p2a, p2b, p2e])
             self.arc3p()
             self.gline_gen(entities.GL(((p1a, p2a), GEOMCOLOR)))
@@ -1606,7 +1260,7 @@ class PyurCad(tk.Tk):  # root = self
             gl2 = self.curr[item2]
             coords1, clr = gl1.get_attribs()
             coords2, clr = gl2.get_attribs()
-            pts = find_common_pt(coords1, coords2)
+            pts = gh.find_common_pt(coords1, coords2)
             if pts:
                 cp, ep1, ep2 = pts
             else:
@@ -1637,7 +1291,7 @@ class PyurCad(tk.Tk):  # root = self
             if len(items) == 2:
                 line1coords, color = self.curr[items[0]].get_attribs()
                 line2coords, color = self.curr[items[1]].get_attribs()
-                pts = find_common_pt(line1coords,
+                pts = gh.find_common_pt(line1coords,
                                      line2coords)
                 if pts:
                     # common pt, other end pt1, other end pt2
@@ -1646,7 +1300,7 @@ class PyurCad(tk.Tk):  # root = self
                     print('No common point found')
                     return
                 # find arc center and tangent points
-                ctr, tp1, tp2 = find_fillet_pts(rw, cp, ep1, ep2)
+                ctr, tp1, tp2 = gh.find_fillet_pts(rw, cp, ep1, ep2)
                 # shorten adjacent sides
                 for item in items:
                     del self.curr[item]
@@ -1690,8 +1344,8 @@ class PyurCad(tk.Tk):  # root = self
             p1 = self.pt_stack.pop()
             p0 = self.pt_stack.pop()
             handles = self.obj_stack.pop()
-            dp = sub_pt(p1, p0)
-            cx, cy = sub_pt(self.ep2cp(p1), self.ep2cp(p0))
+            dp = gh.sub_pt(p1, p0)
+            cx, cy = gh.sub_pt(self.ep2cp(p1), self.ep2cp(p0))
             items = [self.curr[handle] for handle in handles]
             delete_original = False
             if not repeat:  # move, (not copy)
@@ -1701,20 +1355,20 @@ class PyurCad(tk.Tk):  # root = self
                 if item.type is 'gl':
                     pnts, _ = item.get_attribs()
                     for x in range(repeat):
-                        pnts = (add_pt(pnts[0], dp),
-                                add_pt(pnts[1], dp))
+                        pnts = (gh.add_pt(pnts[0], dp),
+                                gh.add_pt(pnts[1], dp))
                         gl = entities.GL((pnts, GEOMCOLOR))
                         self.gline_gen(gl)
                 elif item.type is 'gc':
                     pnts, _ = item.get_attribs()
                     for x in range(repeat):
-                        pnts = (add_pt(pnts[0], dp), pnts[1])
+                        pnts = (gh.add_pt(pnts[0], dp), pnts[1])
                         gc = entities.GC((pnts, GEOMCOLOR))
                         self.gcirc_gen(gc)
                 elif item.type is 'ga':
                     pnts, _ = item.get_attribs()
                     for x in range(repeat):
-                        pnts = (add_pt(pnts[0], dp),
+                        pnts = (gh.add_pt(pnts[0], dp),
                                 pnts[1], pnts[2], pnts[3])
                         ga = entities.GA((pnts, GEOMCOLOR))
                         self.garc_gen(ga)
@@ -1760,20 +1414,20 @@ class PyurCad(tk.Tk):  # root = self
                 if item.type is 'gl':
                     pnts, _ = item.get_attribs()
                     for x in range(self.repeat):
-                        pnts = (rotate_pt(pnts[0], A, ctr),
-                                rotate_pt(pnts[1], A, ctr))
+                        pnts = (gh.rotate_pt(pnts[0], A, ctr),
+                                gh.rotate_pt(pnts[1], A, ctr))
                         gl = entities.GL((pnts, GEOMCOLOR))
                         self.gline_gen(gl)
                 elif item.type is 'gc':
                     pnts, _ = item.get_attribs()
                     for x in range(self.repeat):
-                        pnts = (rotate_pt(pnts[0], A, ctr), pnts[1])
+                        pnts = (gh.rotate_pt(pnts[0], A, ctr), pnts[1])
                         gc = entities.GC((pnts, GEOMCOLOR))
                         self.gcirc_gen(gc)
                 elif item.type is 'ga':
                     pnts, _ = item.get_attribs()
                     for x in range(self.repeat):
-                        pnts = (rotate_pt(pnts[0], A, ctr),
+                        pnts = (gh.rotate_pt(pnts[0], A, ctr),
                                 pnts[1], pnts[2] + A, pnts[3] + A)
                         ga = entities.GA((pnts, GEOMCOLOR))
                         self.garc_gen(ga)
@@ -1805,10 +1459,10 @@ class PyurCad(tk.Tk):  # root = self
         then regenerate them in the new position."""
 
         (p1, p2, p3, c), color = dim_obj.get_attribs()
-        dimdir = para_line(c, p3)
-        p1b = proj_pt_on_line(dimdir, p1)
-        p2b = proj_pt_on_line(dimdir, p2)
-        d = p2p_dist(p1b, p2b) / self.unitscale
+        dimdir = gh.para_line(c, p3)
+        p1b = gh.proj_pt_on_line(dimdir, p1)
+        p2b = gh.proj_pt_on_line(dimdir, p2)
+        d = gh.p2p_dist(p1b, p2b) / self.unitscale
         text = '%.3f' % d
         x3, y3 = self.ep2cp(p3)
         tkid = self.canvas.create_text(x3, y3, fill=color, text=text)
@@ -1818,18 +1472,18 @@ class PyurCad(tk.Tk):  # root = self
         xa, ya, xb, yb = self.canvas.bbox(tkid)
         xa, ya = self.cp2ep((xa, ya))
         xb, yb = self.cp2ep((xb, yb))
-        innerpts = cline_box_intrsctn(dimdir, (xa, ya, xb, yb))
-        ip1 = closer(p1b, innerpts[0], innerpts[1])
-        ip2 = closer(p2b, innerpts[0], innerpts[1])
+        innerpts = gh.cline_box_intrsctn(dimdir, (xa, ya, xb, yb))
+        ip1 = gh.closer(p1b, innerpts[0], innerpts[1])
+        ip2 = gh.closer(p2b, innerpts[0], innerpts[1])
         self.line_draw((ip1, p1b), color=color, tag=('d', dgidtag), arrow=LAST)
         self.line_draw((ip2, p2b), color=color, tag=('d', dgidtag), arrow=LAST)
         # create extension lines
         # make ext line gap appear same size irrespective of zoom
         gap = self.canvas.c2w_dx(self.dimgap)
-        p1a = shortenline(p1b, p1, gap)
-        p2a = shortenline(p2b, p2, gap)
-        p1c = extendline(p1, p1b, gap)
-        p2c = extendline(p2, p2b, gap)
+        p1a = gh.shortenline(p1b, p1, gap)
+        p2a = gh.shortenline(p2b, p2, gap)
+        p1c = gh.extendline(p1, p1b, gap)
+        p2c = gh.extendline(p2, p2b, gap)
         if p1a and p2a and p1c and p2c:
             self.line_draw((p1a, p1c), color=color, tag=('d', dgidtag))
             self.line_draw((p2a, p2c), color=color, tag=('d', dgidtag))
@@ -1865,7 +1519,7 @@ class PyurCad(tk.Tk):  # root = self
             p3 = self.cp2ep(p)
             p2 = self.pt_stack[1]
             p1 = self.pt_stack[0]
-            if not same_pt_p(p3, p2):
+            if not gh.same_pt_p(p3, p2):
                 if self.rubber:
                     for each in self.canvas.find_withtag(self.rubber):
                         self.canvas.delete(each)
@@ -1912,7 +1566,7 @@ class PyurCad(tk.Tk):  # root = self
                     d = self.curr[item].coords
                 elif 'g' in tags:
                     p1, p2 = self.curr[item].coords
-                    d = cnvrt_2pts_to_coef(p1, p2)
+                    d = gh.cnvrt_2pts_to_coef(p1, p2)
                 if d:
                     self.dim_lin(p, d)
 
@@ -2625,39 +2279,39 @@ class PyurCad(tk.Tk):  # root = self
                     return (xc, yc)
                 caught = None
                 for pt in arc_end_pts:
-                    if pnt_in_box_p((pt[0], pt[1]),
+                    if gh.pnt_in_box_p((pt[0], pt[1]),
                                     (x-cr, y-cr, x+cr, y+cr)):
                         caught = pt
                 if caught:
                     return caught
-                ip = line_circ_inters(xc, yc, x, y, xc, yc, r)
+                ip = gh.line_circ_inters(xc, yc, x, y, xc, yc, r)
                 for pt in ip:
-                    if p2p_dist(pt, (x, y)) < cr:
+                    if gh.p2p_dist(pt, (x, y)) < cr:
                         return pt
             elif self.canvas.type(item) == 'oval':
                 x0, y0, x1, y1 = self.canvas.coords(item)
-                xc, yc = ctr = midpoint((x0, y0), (x1, y1))
+                xc, yc = ctr = gh.midpoint((x0, y0), (x1, y1))
                 r = (x1-x0)/2
                 if self.catchCntr:
                     return (xc, yc)
-                inters_pts = line_circ_inters(xc, yc, x, y, xc, yc, r)
+                inters_pts = gh.line_circ_inters(xc, yc, x, y, xc, yc, r)
                 for pt in inters_pts:
-                    if p2p_dist(pt, (x, y)) < cr:
+                    if gh.p2p_dist(pt, (x, y)) < cr:
                         return (pt[0], pt[1])
             elif self.canvas.type(item) == 'line':
                 x0, y0, x1, y1 = self.canvas.coords(item)  # end pnts
-                xm, ym = midpoint((x0, y0), (x1, y1))   # mid point
+                xm, ym = gh.midpoint((x0, y0), (x1, y1))   # mid point
                 pts = ((x0, y0), (x1, y1), (xm, ym))
                 caught = None
                 for pt in pts:
                     if 'g' in self.canvas.gettags(item) and \
-                       pnt_in_box_p((pt[0], pt[1]),
+                       gh.pnt_in_box_p((pt[0], pt[1]),
                                     (x-cr, y-cr, x+cr, y+cr)):
                         caught = pt
                 if caught:
                     return caught
-                line = cnvrt_2pts_to_coef((x0, y0), (x1, y1))
-                u, v = proj_pt_on_line(line, (x, y))
+                line = gh.cnvrt_2pts_to_coef((x0, y0), (x1, y1))
+                u, v = gh.proj_pt_on_line(line, (x, y))
                 if x0 < u < x1 or x0 > u > x1 or y0 < v < y1 or y0 > v > y1:
                     return (u, v)
 
@@ -2666,12 +2320,12 @@ class PyurCad(tk.Tk):  # root = self
                self.canvas.type(items[1]) == 'line':
                 a, b, c, d = self.canvas.coords(items[0])
                 e, f, g, h = self.canvas.coords(items[1])
-                line1 = cnvrt_2pts_to_coef((a, b), (c, d))
-                line2 = cnvrt_2pts_to_coef((e, f), (g, h))
+                line1 = gh.cnvrt_2pts_to_coef((a, b), (c, d))
+                line2 = gh.cnvrt_2pts_to_coef((e, f), (g, h))
                 if line1 == line2:  # colinear; toss one and try again
                     items.pop()
                     return self.find_catch_pt(items, x, y)
-                ip = intersection(line1, line2)
+                ip = gh.intersection(line1, line2)
                 if not ip:
                     items.pop(0)
                     return self.find_catch_pt(items, x, y)
@@ -2679,15 +2333,15 @@ class PyurCad(tk.Tk):  # root = self
             elif self.canvas.type(items[0]) in ('oval', 'arc') and\
                  self.canvas.type(items[1]) in ('oval', 'arc'):
                 a, b, c, d = self.canvas.coords(items[0])
-                x1, y1 = midpoint((a, b), (c, d))
+                x1, y1 = gh.midpoint((a, b), (c, d))
                 r1 = (c-a)/2
                 e, f, g, h = self.canvas.coords(items[1])
-                x2, y2 = midpoint((e, f), (g, h))
+                x2, y2 = gh.midpoint((e, f), (g, h))
                 r2 = (g-e)/2
-                ip = circ_circ_inters(x1, y1, r1, x2, y2, r2)
+                ip = gh.circ_circ_inters(x1, y1, r1, x2, y2, r2)
                 if ip:
                     for pt in ip:
-                        if p2p_dist(pt, (x, y)) < cr:
+                        if gh.p2p_dist(pt, (x, y)) < cr:
                             return pt
             elif self.canvas.type(items[0]) in ('oval', 'arc') and\
                  self.canvas.type(items[1]) == 'line':
@@ -2695,13 +2349,13 @@ class PyurCad(tk.Tk):  # root = self
             if self.canvas.type(items[0]) == 'line' and\
                self.canvas.type(items[1]) in ('oval', 'arc'):
                 x1, y1, x2, y2 = self.canvas.coords(items[0])
-                line = cnvrt_2pts_to_coef((x1, y1), (x2, y2))
+                line = gh.cnvrt_2pts_to_coef((x1, y1), (x2, y2))
                 e, f, g, h = self.canvas.coords(items[1])
-                xc, yc = cntr = midpoint((e, f), (g, h))
+                xc, yc = cntr = gh.midpoint((e, f), (g, h))
                 r = (g-e)/2
-                ip = line_circ_inters(x1, y1, x2, y2, xc, yc, r)
+                ip = gh.line_circ_inters(x1, y1, x2, y2, xc, yc, r)
                 for pt in ip:
-                    if p2p_dist(pt, (x, y)) < cr:
+                    if gh.p2p_dist(pt, (x, y)) < cr:
                         return pt
 
     def bindings(self):
