@@ -23,7 +23,7 @@ CONSTRCOLOR = 'magenta'  # color of construction entities
 TEXTCOLOR = 'cyan'      # color of text entities
 DIMCOLOR = 'red'        # color of dimension entities
 RUBBERCOLOR = 'yellow'  # color of (temporary) rubber elements
-
+TOOLBARCOLS = 2         # number of columns of toolbar buttons
 
 class PyurCad(tk.Tk):
 
@@ -31,6 +31,7 @@ class PyurCad(tk.Tk):
                                'hvcl': "Horizontal & Vertical Construction Line",
                                'hcl': "Horizontal Construction Line",
                                'vcl': "Vertical Construction Line",
+                               'cl2p': "Construction Line by 2 Points",
                                'acl': "Angled Construction Line",
                                'clrefang': "Construction Line by Ref Angle",
                                'abcl': "Angle Bisector Construction Line",
@@ -55,14 +56,10 @@ class PyurCad(tk.Tk):
                                'translate': "Translate Geometry",
                                'rotate': "Rotate Geometry"}
 
-    tool_bar_functions = ('noop', 'hvcl', 'hcl',
-                          'vcl', 'acl', 'clrefang',
-                          'abcl', 'lbcl', 'parcl',
-                          'perpcl', 'cltan1', 'cltan2',
-                          'ccirc', 'cc3p', 'cccirc',
-                          'line', 'poly', 'rect',
-                          'circ', 'arcc2p', 'arc3p',
-                          'slot', 'split', 'join',
+    tool_bar_functions = ('noop', 'hvcl', 'hcl', 'vcl', 'cl2p', 'acl', 'clrefang',
+                          'abcl', 'lbcl', 'parcl', 'perpcl', 'cltan1', 'cltan2',
+                          'ccirc', 'cc3p', 'cccirc', 'line', 'poly', 'rect',
+                          'circ', 'arcc2p', 'arc3p', 'slot', 'split', 'join',
                           'fillet', 'translate', 'rotate')
 
     selected_tool_bar_function = tool_bar_functions[0]
@@ -363,9 +360,6 @@ class PyurCad(tk.Tk):
     # Debug Tools
     # =======================================================================
 
-    def show_op(self):
-        print(self.op)
-
     def show_curr(self):
         pprint.pprint(self.curr)
         self.end()
@@ -519,6 +513,29 @@ class PyurCad(tk.Tk):
             p = self.pt_stack.pop()
             self.cline_gen(gh.angled_cline(p, 0))
             self.cline_gen(gh.angled_cline(p, 90))
+
+    def cl2p(self, pnt=None):
+        """Create construction line thru 2 points."""
+
+        if not self.pt_stack:
+            message = 'Pick 1st point or enter coords'
+            message += self.shift_key_advice
+            self.update_message_bar(message)
+        elif len(self.pt_stack) == 1:
+            message = 'Pick 2nd point or enter coords'
+            message += self.shift_key_advice
+            self.update_message_bar(message)
+            if pnt:
+                p0 = self.pt_stack[0]
+                p1 = self.cp2ep(pnt)
+                ang = gh.p2p_angle(p0, p1)
+                cline = gh.angled_cline(p0, ang)
+                self.cline_gen(cline, rubber=1)
+        elif len(self.pt_stack) > 1:
+            p1 = self.pt_stack.pop()
+            p0 = self.pt_stack.pop()
+            cline = gh.cnvrt_2pts_to_coef(p0, p1)
+            self.cline_gen(cline)
 
     def acl(self, pnt=None):
         """Create construction line thru a point, at a specified angle."""
@@ -2471,6 +2488,8 @@ class PyurCad(tk.Tk):
                                    command=lambda k="show_calc": self.dispatch(k))
         self.debugmenu.add_command(label="show dir(self)",
                                    command=lambda k="show_dir_self": self.dispatch(k))
+        self.debugmenu.add_command(label="show self.op",
+                                   command=lambda: print(self.op))
         self.debugmenu.add_command(label="draw Workplane",
                                    command=self.draw_workplane)
         self.debugmenu.add_command(label="Launch Wire Cube (Use LMB)",
@@ -2495,13 +2514,14 @@ class PyurCad(tk.Tk):
         self.tool_bar.pack(fill="y", side="left", pady=3)
 
     def create_tool_bar_buttons(self):
+        n = TOOLBARCOLS
         for index, name in enumerate(self.tool_bar_functions):
             icon = tk.PhotoImage(file='icons/' + name + '.gif')
             self.button = tk.Button(
                 self.tool_bar, image=icon,
                 command=lambda index=index: self.on_tool_bar_button_clicked(index))
             self.button.grid(
-                row=index // 3, column=1 + index % 3, sticky='nsew')
+                row=index // n, column=1 + index % n, sticky='nsew')
             self.button.image = icon
 
     def create_status_bar(self):
