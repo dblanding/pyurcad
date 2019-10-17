@@ -16,6 +16,7 @@ import geometryhelpers as gh
 import tkrpncalc
 import txtdialog
 from zooming import Zooming
+import matrix
 
 GEOMCOLOR = 'white'     # color of geometry entities
 CONSTRCOLOR = 'magenta'  # color of construction entities
@@ -2472,8 +2473,10 @@ class PyurCad(tk.Tk):
                                    command=lambda k="show_dir_self": self.dispatch(k))
         self.debugmenu.add_command(label="draw Workplane",
                                    command=self.draw_workplane)
-        self.debugmenu.add_command(label="Launch Cube",
+        self.debugmenu.add_command(label="Launch Wire Cube (Use LMB)",
                                    command=self.launch_cube)
+        self.debugmenu.add_command(label="Launch Shaded Cube (Use MMB)",
+                                   command=self.launch_cube4)
         self.menubar.add_cascade(label="Debug", menu=self.debugmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
@@ -2563,8 +2566,11 @@ class PyurCad(tk.Tk):
                              accelerator=accelrator_key, command=eval(command_callback))
 
     # =======================================================================
-    # Rotating Cube
+    # Rotating Cube Demo (Wire Edges)
     # =======================================================================
+
+    last_x = 0
+    last_y = 0
 
     def transpose_matrix(self, matrix):
         return list(zip(*matrix))
@@ -2594,9 +2600,6 @@ class PyurCad(tk.Tk):
             [[math.cos(z), math.sin(z), 0],
              [-math.sin(z), math.cos(z), 0], [0, 0, 1]], shape)
 
-    last_x = 0
-    last_y = 0
-
     def launch_cube(self):
         self.init_data()
         self.draw_cube()
@@ -2611,8 +2614,8 @@ class PyurCad(tk.Tk):
              [100, -100, 100], [100, 100, 100]])
 
     def bind_mouse_buttons(self):
-        self.canvas.bind("<Button-2>", self.on_mouse_clicked)
-        self.canvas.bind("<B2-Motion>", self.on_mouse_motion)
+        self.canvas.bind("<Button-1>", self.on_mouse_clicked)
+        self.canvas.bind("<B1-Motion>", self.on_mouse_motion)
 
     def draw_cube(self):
         cube_points = [
@@ -2640,6 +2643,263 @@ class PyurCad(tk.Tk):
         self.cube = self.rotate_along_y(self.epsilon(dy), self.cube)
         self.draw_cube()
         self.on_mouse_clicked(event)
+
+    # =======================================================================
+    # Rotating Cube Demo (Colored faces)
+    # =======================================================================
+
+    WIDTH = 640.0
+    HEIGHT = 480.0
+    RATE = 3
+    SPEED = 2
+
+    def launch_cube4(self):
+
+        #The vectors of the Coordinate System (CS)
+        self.cs = [
+            matrix.Vector3D(0.0, 0.0, 0.0), #Origin
+            matrix.Vector3D(1.0, 0.0, 0.0), #X
+            matrix.Vector3D(0.0, 1.0, 0.0), #Y
+            matrix.Vector3D(0.0 ,0.0, 1.0), #Z
+            ]
+
+        #Let these be in World-coordinates (worldview-matrix already applied)
+        ####In right-handed, counter-clockwise order
+        self.cube = [
+            matrix.Vector3D(-0.5,0.5,-0.5),
+            matrix.Vector3D(0.5,0.5,-0.5),
+            matrix.Vector3D(0.5,-0.5,-0.5),
+            matrix.Vector3D(-0.5,-0.5,-0.5),
+            matrix.Vector3D(-0.5,0.5,0.5),
+            matrix.Vector3D(0.5,0.5,0.5),
+            matrix.Vector3D(0.5,-0.5,0.5),
+            matrix.Vector3D(-0.5,-0.5,0.5)
+            ]
+
+        # Define the vertices that compose each of the 6 faces. These numbers are
+        # indices to the vertices list defined above.
+        self.cubefaces = [(0,1,2,3),(1,5,6,2),(5,4,7,6),(4,0,3,7),(0,4,5,1),(3,2,6,7)] 
+        self.cls = ['red', 'green', 'blue', 'yellow', 'cyan', 'white']
+
+        self.ang = [0.0, 0.0, 0.0] # phi(x), theta(y), psi(z)
+        # translation (x, y, z) (e.g. if want to move the Camera to (0, 0, 2)
+        # then (0, 0, -2) need to be entered)
+        self.trans = [0.0, 0.0, 0.0]
+
+        #The matrices (Scale, Shear, Rotate, Translate) apply to the View/Camera
+
+        #The Scale Matrix
+        self.Scale = matrix.Matrix(4, 4)
+        Scalex = 0.5
+        Scaley = 0.5
+        Scalez = 0.5
+        self.Scale[(0,0)] = Scalex
+        self.Scale[(1,1)] = Scaley
+        self.Scale[(2,2)] = Scalez
+
+        #The Shear Matrix
+        self.Shearxy = matrix.Matrix(4, 4)
+        self.Shearxy[(0,2)] = 0.0
+        self.Shearxy[(1,2)] = 0.0
+        self.Shearxz = matrix.Matrix(4, 4)
+        self.Shearxz[(0,1)] = 0.0
+        self.Shearxz[(2,1)] = 0.0
+        self.Shearyz = matrix.Matrix(4, 4)
+        self.Shearyz[(1,0)] = 0.0
+        self.Shearyz[(2,0)] = 0.0
+        self.Shear = self.Shearxy*self.Shearxz*self.Shearyz
+
+        #The Rotation Matrices
+        self.Rotx = matrix.Matrix(4,4)
+        self.Roty = matrix.Matrix(4,4)
+        self.Rotz = matrix.Matrix(4,4)
+
+        #The Translation Matrix (will contain xoffset, yoffset, zoffset)
+        self.Tr = matrix.Matrix(4, 4)   
+
+        #The Projection Matrix
+        self.Proj = matrix.Matrix(4, 4) 
+        #foc controls how much of the screen is viewed
+        fov = 90.0 #between 30 and 90 ?
+        zfar = 100.0
+        znear = 0.1
+        S = 1/(math.tan(math.radians(fov/2)))
+        #1st version (Perspective Projection)
+        #self.Proj[(0,0)] = S
+        #self.Proj[(1,1)] = S
+        #self.Proj[(2,2)] = -zfar/(zfar-znear)
+        #self.Proj[(3,2)] = -1.0
+        #self.Proj[(2,3)] = -(zfar*znear)/(zfar-znear)
+        #self.Proj[(3,3)] = 0.0 #this should be zero acc. to the docs but it doesn't work
+
+        #2nd version (Simple Projection)
+        #self.Proj[(2,3)] = -1.0
+        #self.Proj[(3,3)] = 0.0
+
+        #3rd version (Perspective Projection) (Dr HS Fortuna Playstation)
+        #A = Simulation.WIDTH/Simulation.HEIGHT
+        #self.Proj[(0,0)] = S/A
+        #self.Proj[(1,1)] = S
+        #self.Proj[(2,2)] = (zfar+znear)/(zfar-znear)
+        #self.Proj[(3,2)] = -1.0
+        #self.Proj[(2,3)] = -2*(zfar*znear)/(zfar-znear)
+        #self.Proj[(3,3)] = 0.0
+
+        #4th version (Perspective Projection) (OpenGL)
+        A = self.WIDTH / self.HEIGHT
+        self.Proj[(0,0)] = S/A
+        self.Proj[(1,1)] = S
+        self.Proj[(2,2)] = (zfar+znear)/(znear-zfar)
+        self.Proj[(3,2)] = -1.0
+        self.Proj[(2,3)] = 2*(zfar*znear)/(znear-zfar)
+        #self.Proj[(3,3)] = 0.0
+
+        self.lctrl_pressed = False
+
+        self.bind("<B2-Motion>", self.dragcallback)
+        self.bind("<ButtonRelease-2>", self.releasecallback)
+        self.bind("<Key>", self.keycallback)
+        self.bind("<KeyRelease>", self.keyreleasecallback)
+
+        self.cnt = self.RATE
+        self.prevmouseX = 0.0
+        self.prevmouseY = 0.0
+
+        self.update()
+
+    def update(self):
+        # Main simulation loop.
+        self.canvas.delete(tk.ALL)
+
+        self.Rotx[(1,1)] = math.cos(math.radians(self.ang[0]))
+        self.Rotx[(1,2)] = -math.sin(math.radians(self.ang[0]))
+        self.Rotx[(2,1)] = math.sin(math.radians(self.ang[0]))
+        self.Rotx[(2,2)] = math.cos(math.radians(self.ang[0]))
+
+        self.Roty[(0,0)] = math.cos(math.radians(self.ang[1]))
+        self.Roty[(0,2)] = math.sin(math.radians(self.ang[1]))
+        self.Roty[(2,0)] = -math.sin(math.radians(self.ang[1]))
+        self.Roty[(2,2)] = math.cos(math.radians(self.ang[1]))
+
+        self.Rotz[(0,0)] = math.cos(math.radians(self.ang[2]))
+        self.Rotz[(0,1)] = -math.sin(math.radians(self.ang[2]))
+        self.Rotz[(1,0)] = math.sin(math.radians(self.ang[2]))
+        self.Rotz[(1,1)] = math.cos(math.radians(self.ang[2]))
+
+        #The Rotation matrix
+        self.Rot = self.Rotx*self.Roty*self.Rotz
+
+        self.Tr[(0,3)] = self.trans[0]
+        self.Tr[(1,3)] = self.trans[1]
+        self.Tr[(2,3)] = self.trans[2]
+
+        #The Transformation matrix
+        self.Tsf = self.Scale*self.Shear*self.Rot*self.Tr
+
+        #Cube
+        for i in range(len(self.cubefaces)):
+            inviewingvolume = False
+            poly = [] #transformed polygon
+            for j in range(len(self.cubefaces[0])):
+                v = self.cube[self.cubefaces[i][j]]
+
+                # Scale, Shear, Rotate the vertex around X axis,
+                # then around Y axis, and finally around Z axis and Translate.
+                r = self.Tsf*v
+
+                # Transform the point from 3D to 2D
+                ps = self.Proj*r
+
+                # Put the screenpoint in the list of transformed vertices
+                p = self.toScreenCoords(ps)
+                x = int(p.x)
+                y = int(p.y)
+                poly.append((x, y))
+
+                # if only one vertex is in the screen (x[-1,1], y[-1,1], z[-1,1])
+                # then draw the whole polygon
+                if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
+                        inviewingvolume = True
+
+            if inviewingvolume:
+                if self.isPolygonFrontFace(poly): #Backface culling
+                    self.canvas.create_polygon(*poly, fill=self.cls[i])
+
+    def toScreenCoords(self, pv):
+        #print str(pv)
+        #Projection will project to [-1; 1] so the points need to be scaled on screen
+        #px = min(((pv.x+1)*0.5*Simulation.WIDTH), Simulation.WIDTH-1)
+        #Reflect the Y-coordinate because the screen it goes downwards
+        #py = min(((1-(pv.y+1)*0.5)*Simulation.HEIGHT), Simulation.HEIGHT-1)
+
+        #return matrix.Vector3D(int(px), int(py), 1)
+
+        #Screen matrix
+        SC = matrix.Matrix(4, 4)
+        SC[(0,0)] = self.WIDTH/2
+        SC[(1,1)] = -self.HEIGHT/2
+        SC[(0,3)] = self.WIDTH/2
+        SC[(1,3)] = self.HEIGHT/2
+
+        return SC*pv
+
+    def isPolygonFrontFace(self, pts):#Clockwise?
+        summa = 0.0
+        num = len(pts)
+        for i in range(num-1):
+            summa += (pts[i+1][0]-pts[i][0])*(pts[i+1][1]+pts[i][1])
+
+        summa += (pts[0][0]-pts[num-1][0])*(pts[0][1]+pts[num-1][1])
+
+        return summa > 0.0
+
+    def dragcallback(self, event):
+        self.cnt -= 1
+        if self.cnt == 0:
+            self.cnt = self.RATE
+            diffX = event.x-self.prevmouseX
+            diffY = event.y-self.prevmouseY
+
+            if not self.lctrl_pressed:
+                self.ang[0] += diffY*self.SPEED
+                self.ang[1] += diffX*self.SPEED
+
+                if self.ang[0] >= 360.0:
+                        self.ang[0] -= 360.0
+                if self.ang[0] < 0.0:
+                        self.ang[0] += 360.0
+                if self.ang[1] >= 360.0:
+                        self.ang[1] -= 360.0
+                if self.ang[1] < 0.0:
+                        self.ang[1] += 360.0
+
+            else:
+                self.ang[2] += diffX*self.SPEED
+                if self.ang[2] >= 360.0:
+                    self.ang[2] -= 360.0
+                if self.ang[2] < 0.0:
+                    self.ang[2] += 360.0
+
+            self.update()
+
+        self.prevmouseX = event.x
+        self.prevmouseY = event.y
+
+    def releasecallback(self, event):
+        self.cnt = self.RATE
+        self.prevmouseX = 0.0
+        self.prevmouseY = 0.0
+
+    def keycallback(self, event):
+        #print event.char
+        #print event.keycode
+        #print event.keysym
+        if event.keysym == "Control_L":
+            self.lctrl_pressed = True
+
+    def keyreleasecallback(self, event):
+        if event.keysym == "Control_L":
+            self.lctrl_pressed = False
 
 
 if __name__ == '__main__':
