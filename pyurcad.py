@@ -462,7 +462,7 @@ class PyurCad(tk.Tk):
     def hcl(self, pnt=None):
         """Create horizontal construction line from one point or y value."""
 
-        message = 'Pick a pt or enter a value'
+        message = 'Pick a pt or enter Y value'
         message += self.shift_key_advice
         self.update_message_bar(message)
         proceed = 0
@@ -484,7 +484,7 @@ class PyurCad(tk.Tk):
     def vcl(self, pnt=None):
         """Create vertical construction line from one point or x value."""
 
-        message = 'Pick a pt or enter a value'
+        message = 'Pick a pt or enter X value'
         message += self.shift_key_advice
         self.update_message_bar(message)
         proceed = 0
@@ -506,7 +506,7 @@ class PyurCad(tk.Tk):
     def hvcl(self, pnt=None):
         """Create a horizontal & vertical construction line pair at a point."""
 
-        message = 'Pick a pt or enter coords x,y'
+        message = 'Pick a pt or enter X,Y coords'
         message += self.shift_key_advice
         self.update_message_bar(message)
         if self.pt_stack:
@@ -518,11 +518,11 @@ class PyurCad(tk.Tk):
         """Create construction line thru 2 points."""
 
         if not self.pt_stack:
-            message = 'Pick 1st point or enter coords'
+            message = 'Pick 1st point or enter X,Y coords'
             message += self.shift_key_advice
             self.update_message_bar(message)
         elif len(self.pt_stack) == 1:
-            message = 'Pick 2nd point or enter coords'
+            message = 'Pick 2nd point or enter X,Y coords'
             message += self.shift_key_advice
             self.update_message_bar(message)
             if pnt:
@@ -541,7 +541,7 @@ class PyurCad(tk.Tk):
         """Create construction line thru a point, at a specified angle."""
 
         if not self.pt_stack:
-            message = 'Pick a pt for angled construction line or enter coords'
+            message = 'Pick a pt or enter X,Y coords'
             message += self.shift_key_advice
             self.update_message_bar(message)
         elif self.pt_stack and self.float_stack:
