@@ -462,7 +462,7 @@ class PyurCad(tk.Tk):
     def hcl(self, pnt=None):
         """Create horizontal construction line from one point or y value."""
 
-        message = 'Pick a pt or enter Y value'
+        message = 'Pick a pt or enter a value'
         message += self.shift_key_advice
         self.update_message_bar(message)
         proceed = 0
@@ -484,7 +484,7 @@ class PyurCad(tk.Tk):
     def vcl(self, pnt=None):
         """Create vertical construction line from one point or x value."""
 
-        message = 'Pick a pt or enter X value'
+        message = 'Pick a pt or enter a value'
         message += self.shift_key_advice
         self.update_message_bar(message)
         proceed = 0
@@ -506,7 +506,7 @@ class PyurCad(tk.Tk):
     def hvcl(self, pnt=None):
         """Create a horizontal & vertical construction line pair at a point."""
 
-        message = 'Pick a pt or enter X,Y coords'
+        message = 'Pick a pt or enter coords x,y'
         message += self.shift_key_advice
         self.update_message_bar(message)
         if self.pt_stack:
@@ -518,11 +518,11 @@ class PyurCad(tk.Tk):
         """Create construction line thru 2 points."""
 
         if not self.pt_stack:
-            message = 'Pick 1st point or enter X,Y coords'
+            message = 'Pick 1st point or enter coords'
             message += self.shift_key_advice
             self.update_message_bar(message)
         elif len(self.pt_stack) == 1:
-            message = 'Pick 2nd point or enter X,Y coords'
+            message = 'Pick 2nd point or enter coords'
             message += self.shift_key_advice
             self.update_message_bar(message)
             if pnt:
@@ -541,7 +541,7 @@ class PyurCad(tk.Tk):
         """Create construction line thru a point, at a specified angle."""
 
         if not self.pt_stack:
-            message = 'Pick a pt or enter X,Y coords'
+            message = 'Pick a pt for angled construction line or enter coords'
             message += self.shift_key_advice
             self.update_message_bar(message)
         elif self.pt_stack and self.float_stack:
@@ -2492,10 +2492,8 @@ class PyurCad(tk.Tk):
                                    command=lambda: print(self.op))
         self.debugmenu.add_command(label="draw Workplane",
                                    command=self.draw_workplane)
-        self.debugmenu.add_command(label="Launch Wire Cube (Use LMB)",
-                                   command=self.launch_cube)
-        self.debugmenu.add_command(label="Launch Shaded Cube (Use MMB)",
-                                   command=self.launch_cube4)
+        self.debugmenu.add_command(label="Launch Tut1 (Use MMB)",
+                                   command=self.launch_tut1)
         self.menubar.add_cascade(label="Debug", menu=self.debugmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
@@ -2553,10 +2551,10 @@ class PyurCad(tk.Tk):
         self.canvas_frame = tk.Frame(self, width=1200, height=900)
         self.canvas_frame.pack(side="right", expand="yes", fill="both")
         self.canvas = Zooming(self.canvas_frame, background="black",
-                              width=800, height=500)
+                              width=800, height=540)
         self.canvas.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.BOTH)
         self.bindings()  # original cadvas bindings
-        self.canvas.move_can(60, 420)  # Put 0,0 near lower left corner
+        self.canvas.move_can(300, 300)  # Put 0,0 near lower left corner
 
     def bind_menu_accelrator_keys(self):
         self.bind('<KeyPress-F1>', self.on_about_menu_clicked)
@@ -2586,105 +2584,26 @@ class PyurCad(tk.Tk):
                              accelerator=accelrator_key, command=eval(command_callback))
 
     # =======================================================================
-    # Rotating Cube Demo (Wire Edges)
+    # Rotating Cube Demo (Modification of tut1)
     # =======================================================================
 
-    last_x = 0
-    last_y = 0
-
-    def transpose_matrix(self, matrix):
-        return list(zip(*matrix))
-
-    def translate_vector(self, x, y, dx, dy):
-        return x + dx, y + dy
-
-    def matrix_multiply(self, matrix_a, matrix_b):
-        zip_b = list(zip(*matrix_b))
-        return [[
-            sum(ele_a * ele_b for ele_a, ele_b in zip(row_a, col_b))
-            for col_b in zip_b
-            ] for row_a in matrix_a]
-
-    def rotate_along_x(self, x, shape):
-        return self.matrix_multiply(
-            [[1, 0, 0], [0, math.cos(x), -math.sin(x)],
-             [0, math.sin(x), math.cos(x)]], shape)
-
-    def rotate_along_y(self, y, shape):
-        return self.matrix_multiply(
-            [[math.cos(y), 0, math.sin(y)], [0, 1, 0],
-             [-math.sin(y), 0, math.cos(y)]], shape)
-
-    def rotate_along_z(self, z, shape):
-        return self.matrix_multiply(
-            [[math.cos(z), math.sin(z), 0],
-             [-math.sin(z), math.cos(z), 0], [0, 0, 1]], shape)
-
-    def launch_cube(self):
-        self.init_data()
-        self.draw_cube()
-        self.bind_mouse_buttons()
-        #self.continually_rotate()
-        self.epsilon = lambda d: d * 0.01
-
-    def init_data(self):
-        self.cube = self.transpose_matrix(
-            [[-100, -100, -100], [-100, 100, -100], [-100, -100, 100 ],
-             [-100, 100, 100],  [100, -100, -100], [100, 100, -100],
-             [100, -100, 100], [100, 100, 100]])
-
-    def bind_mouse_buttons(self):
-        self.canvas.bind("<Button-1>", self.on_mouse_clicked)
-        self.canvas.bind("<B1-Motion>", self.on_mouse_motion)
-
-    def draw_cube(self):
-        cube_points = [
-            [0, 1, 2, 4], [3, 1, 2, 7], [5, 1, 4, 7], [6, 2, 4, 7]]
-        w = self.canvas.winfo_width() / 2
-        h = self.canvas.winfo_height() / 2
-        self.canvas.delete(tk.ALL)
-        for i in cube_points:
-            for j in i:
-                self.canvas.create_line(
-                    self.translate_vector(
-                        self.cube[0][i[0]], self.cube[1][i[0]], w, h),
-                    self.translate_vector(
-                        self.cube[0][j], self.cube[1][j], w, h),
-                    fill=GEOMCOLOR)
-
-    def on_mouse_clicked(self, event):
-        self.last_x = event.x
-        self.last_y = event.y
-
-    def on_mouse_motion(self, event):
-        dx = self.last_y - event.y
-        self.cube = self.rotate_along_x(self.epsilon(-dx), self.cube)
-        dy = self.last_x - event.x
-        self.cube = self.rotate_along_y(self.epsilon(dy), self.cube)
-        self.draw_cube()
-        self.on_mouse_clicked(event)
-
-    # =======================================================================
-    # Rotating Cube Demo (Colored faces)
-    # =======================================================================
-
-    WIDTH = 640.0
-    HEIGHT = 480.0
+    WIDTH = 800.0
+    HEIGHT = 540.0
     RATE = 3
     SPEED = 2
 
-    def launch_cube4(self):
+    def launch_tut1(self):
 
         #The vectors of the Coordinate System (CS)
         self.cs = [
             matrix.Vector3D(0.0, 0.0, 0.0), #Origin
-            matrix.Vector3D(1.0, 0.0, 0.0), #X
-            matrix.Vector3D(0.0, 1.0, 0.0), #Y
-            matrix.Vector3D(0.0 ,0.0, 1.0), #Z
+            matrix.Vector3D(0.5, 0.0, 0.0), #X
+            matrix.Vector3D(0.0, 0.5, 0.0), #Y
+            matrix.Vector3D(0.0 ,0.0, 0.5), #Z
             ]
 
         #Let these be in World-coordinates (worldview-matrix already applied)
-        ####In right-handed, counter-clockwise order
+        #In right-handed, counter-clockwise order
         self.cube = [
             matrix.Vector3D(-0.5,0.5,-0.5),
             matrix.Vector3D(0.5,0.5,-0.5),
@@ -2696,23 +2615,41 @@ class PyurCad(tk.Tk):
             matrix.Vector3D(-0.5,-0.5,0.5)
             ]
 
+        p1x, p1y = self.ep2cp((-100, 100))
+        p2x, p2y = self.ep2cp((100, 100))
+        p3x, p3y = self.ep2cp((100, -100))
+        p4x, p4y = self.ep2cp((-100, -100))
+        self.cube = [
+            matrix.Vector3D(p1x, p1y, -100),
+            matrix.Vector3D(p2x, p2y, -100),
+            matrix.Vector3D(p3x, p3y, -100),
+            matrix.Vector3D(p4x, p4y, -100),
+            matrix.Vector3D(p1x, p1y, 100),
+            matrix.Vector3D(p2x, p2y, 100),
+            matrix.Vector3D(p3x, p3y, 100),
+            matrix.Vector3D(p4x, p4y, 100)
+            ]
+
+        self.dotx = matrix.Vector3D(-0.5, 0.0, 0.0)
+        self.doty = matrix.Vector3D(0.0, -0.5, 0.0)
+        self.dotz = matrix.Vector3D(0.0, 0.0, -0.5)
+
         # Define the vertices that compose each of the 6 faces. These numbers are
         # indices to the vertices list defined above.
         self.cubefaces = [(0,1,2,3),(1,5,6,2),(5,4,7,6),(4,0,3,7),(0,4,5,1),(3,2,6,7)] 
-        self.cls = ['red', 'green', 'blue', 'yellow', 'cyan', 'white']
 
         self.ang = [0.0, 0.0, 0.0] # phi(x), theta(y), psi(z)
-        # translation (x, y, z) (e.g. if want to move the Camera to (0, 0, 2)
+        self.trans = [0.0, 0.0, 0.0] # translation (x, y, z)
+        # (e.g. if want to move the Camera to (0, 0, 2),
         # then (0, 0, -2) need to be entered)
-        self.trans = [0.0, 0.0, 0.0]
 
         #The matrices (Scale, Shear, Rotate, Translate) apply to the View/Camera
 
         #The Scale Matrix
         self.Scale = matrix.Matrix(4, 4)
-        Scalex = 0.5
-        Scaley = 0.5
-        Scalez = 0.5
+        Scalex = 1.0
+        Scaley = 1.0
+        Scalez = 1.0
         self.Scale[(0,0)] = Scalex
         self.Scale[(1,1)] = Scaley
         self.Scale[(2,2)] = Scalez
@@ -2739,40 +2676,9 @@ class PyurCad(tk.Tk):
 
         #The Projection Matrix
         self.Proj = matrix.Matrix(4, 4) 
-        #foc controls how much of the screen is viewed
-        fov = 90.0 #between 30 and 90 ?
-        zfar = 100.0
-        znear = 0.1
-        S = 1/(math.tan(math.radians(fov/2)))
-        #1st version (Perspective Projection)
-        #self.Proj[(0,0)] = S
-        #self.Proj[(1,1)] = S
-        #self.Proj[(2,2)] = -zfar/(zfar-znear)
-        #self.Proj[(3,2)] = -1.0
-        #self.Proj[(2,3)] = -(zfar*znear)/(zfar-znear)
-        #self.Proj[(3,3)] = 0.0 #this should be zero acc. to the docs but it doesn't work
-
-        #2nd version (Simple Projection)
-        #self.Proj[(2,3)] = -1.0
-        #self.Proj[(3,3)] = 0.0
-
-        #3rd version (Perspective Projection) (Dr HS Fortuna Playstation)
-        #A = Simulation.WIDTH/Simulation.HEIGHT
-        #self.Proj[(0,0)] = S/A
-        #self.Proj[(1,1)] = S
-        #self.Proj[(2,2)] = (zfar+znear)/(zfar-znear)
-        #self.Proj[(3,2)] = -1.0
-        #self.Proj[(2,3)] = -2*(zfar*znear)/(zfar-znear)
-        #self.Proj[(3,3)] = 0.0
-
-        #4th version (Perspective Projection) (OpenGL)
-        A = self.WIDTH / self.HEIGHT
-        self.Proj[(0,0)] = S/A
-        self.Proj[(1,1)] = S
-        self.Proj[(2,2)] = (zfar+znear)/(znear-zfar)
-        self.Proj[(3,2)] = -1.0
-        self.Proj[(2,3)] = 2*(zfar*znear)/(znear-zfar)
-        #self.Proj[(3,3)] = 0.0
+        #2nd version (Simple Projection, no perspective)
+        self.Proj[(2,3)] = -1.0
+        self.Proj[(3,3)] = 0.0
 
         self.lctrl_pressed = False
 
@@ -2787,9 +2693,28 @@ class PyurCad(tk.Tk):
 
         self.update()
 
+    def toScreenCoords(self, pv):
+        # print str(pv)
+        #Projection will project to [-1; 1] so the points need to be scaled on screen
+        px = min(((pv.x+1)*0.5*self.WIDTH), self.WIDTH-1)
+        #Reflect the Y-coordinate because the screen it goes downwards
+        py = min(((1-(pv.y+1)*0.5)*self.HEIGHT), self.HEIGHT-1)
+
+        return matrix.Vector3D(int(px), int(py), 1)
+
+        #Screen matrix
+        # SC = matrix.Matrix(4, 4)
+        # SC[(0,0)] = self.WIDTH/2
+        # SC[(1,1)] = -self.HEIGHT/2
+        # SC[(0,3)] = self.WIDTH/2
+        # SC[(1,3)] = self.HEIGHT/2
+
+        # return SC*pv
+
     def update(self):
-        # Main simulation loop.
-        self.canvas.delete(tk.ALL)
+        
+        for item in self.canvas.find_withtag('demo'):
+            self.canvas.delete(item)
 
         self.Rotx[(1,1)] = math.cos(math.radians(self.ang[0]))
         self.Rotx[(1,2)] = -math.sin(math.radians(self.ang[0]))
@@ -2816,6 +2741,27 @@ class PyurCad(tk.Tk):
         #The Transformation matrix
         self.Tsf = self.Scale*self.Shear*self.Rot*self.Tr
 
+        inviewingvolume = False
+
+        #First draw the lines of the CS
+        tvs = [] #transformed vectors
+        for v in self.cs:
+            r = self.Tsf*v
+            ps = self.Proj*r
+            tvs.append(self.toScreenCoords(ps))
+
+            #if only one vertex is in the screen (x[-1,1], y[-1,1], z[-1,1]) then we draw the whole CS 
+            if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
+                inviewingvolume = True
+
+        if inviewingvolume:
+            self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[1].x, tvs[1].y, fill='red', tags='demo') 
+            self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[2].x, tvs[2].y, fill='green', tags='demo') 
+            self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[3].x, tvs[3].y, fill='blue', tags='demo') 
+        #End of drawing of the lines of the CS
+
+        inviewingvolume = False
+
         #Cube
         for i in range(len(self.cubefaces)):
             inviewingvolume = False
@@ -2823,57 +2769,73 @@ class PyurCad(tk.Tk):
             for j in range(len(self.cubefaces[0])):
                 v = self.cube[self.cubefaces[i][j]]
 
-                # Scale, Shear, Rotate the vertex around X axis,
-                # then around Y axis, and finally around Z axis and Translate.
+                # Scale, Shear, Rotate the vertex around X axis, then around Y axis, and finally around Z axis and Translate.
                 r = self.Tsf*v
 
                 # Transform the point from 3D to 2D
                 ps = self.Proj*r
-
+                
                 # Put the screenpoint in the list of transformed vertices
-                p = self.toScreenCoords(ps)
+                p = ps # self.toScreenCoords(ps)
+                
                 x = int(p.x)
                 y = int(p.y)
                 poly.append((x, y))
 
-                # if only one vertex is in the screen (x[-1,1], y[-1,1], z[-1,1])
-                # then draw the whole polygon
-                if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
-                        inviewingvolume = True
+            for k in range(len(poly)-1):
+                self.canvas.create_line(poly[k][0], poly[k][1], poly[k+1][0],
+                                       poly[k+1][1], fill='white', tags='demo') 
 
-            if inviewingvolume:
-                if self.isPolygonFrontFace(poly): #Backface culling
-                    self.canvas.create_polygon(*poly, fill=self.cls[i])
+            self.canvas.create_line(poly[len(poly)-1][0], poly[len(poly)-1][1],
+                                   poly[0][0], poly[0][1], fill='white', tags='demo') 
 
-    def toScreenCoords(self, pv):
-        #print str(pv)
-        #Projection will project to [-1; 1] so the points need to be scaled on screen
-        #px = min(((pv.x+1)*0.5*Simulation.WIDTH), Simulation.WIDTH-1)
-        #Reflect the Y-coordinate because the screen it goes downwards
-        #py = min(((1-(pv.y+1)*0.5)*Simulation.HEIGHT), Simulation.HEIGHT-1)
+        inviewingvolume = False
 
-        #return matrix.Vector3D(int(px), int(py), 1)
+        #Dotx
+        r = self.Tsf*self.dotx
+        ps = self.Proj*r
+        if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
+            inviewingvolume = True
 
-        #Screen matrix
-        SC = matrix.Matrix(4, 4)
-        SC[(0,0)] = self.WIDTH/2
-        SC[(1,1)] = -self.HEIGHT/2
-        SC[(0,3)] = self.WIDTH/2
-        SC[(1,3)] = self.HEIGHT/2
+        if inviewingvolume:
+            p = self.toScreenCoords(ps)
+            x, y = int(p.x), int(p.y)
+            self.canvas.create_rectangle(x, y, x+10, y+10, fill="red", tags='demo')
 
-        return SC*pv
+        inviewingvolume = False
 
-    def isPolygonFrontFace(self, pts):#Clockwise?
-        summa = 0.0
-        num = len(pts)
-        for i in range(num-1):
-            summa += (pts[i+1][0]-pts[i][0])*(pts[i+1][1]+pts[i][1])
+        #Doty
+        r = self.Tsf*self.doty
+        ps = self.Proj*r
+        if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
+            inviewingvolume = True
 
-        summa += (pts[0][0]-pts[num-1][0])*(pts[0][1]+pts[num-1][1])
+        if inviewingvolume:
+            p = self.toScreenCoords(ps)
+            x, y = int(p.x), int(p.y)
+            self.canvas.create_rectangle(x, y, x+10, y+10, fill="green", tags='demo')
 
-        return summa > 0.0
+        inviewingvolume = False
+
+        #Dotz
+        r = self.Tsf*self.dotz
+        ps = self.Proj*r
+        if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
+            inviewingvolume = True
+
+        if inviewingvolume:
+            p = self.toScreenCoords(ps)
+            x, y = int(p.x), int(p.y)
+            self.canvas.create_rectangle(x, y, x+10, y+10, fill="blue", tags='demo')
 
     def dragcallback(self, event):
+        # It's also possible to use the angle calculated from the mousepos-change from the center of the screen:
+        # dx = event.x - Simulation.WIDTH/2
+        # dy = event.y - Simulation.HEIGHT/2
+        # ang = math.degrees(math.atan2(dy, dx))
+
+        # if ang < 0.0:
+        #     ang += 360.0
         self.cnt -= 1
         if self.cnt == 0:
             self.cnt = self.RATE
@@ -2885,13 +2847,13 @@ class PyurCad(tk.Tk):
                 self.ang[1] += diffX*self.SPEED
 
                 if self.ang[0] >= 360.0:
-                        self.ang[0] -= 360.0
+                    self.ang[0] -= 360.0
                 if self.ang[0] < 0.0:
-                        self.ang[0] += 360.0
+                    self.ang[0] += 360.0
                 if self.ang[1] >= 360.0:
-                        self.ang[1] -= 360.0
+                    self.ang[1] -= 360.0
                 if self.ang[1] < 0.0:
-                        self.ang[1] += 360.0
+                    self.ang[1] += 360.0
 
             else:
                 self.ang[2] += diffX*self.SPEED
@@ -2911,9 +2873,9 @@ class PyurCad(tk.Tk):
         self.prevmouseY = 0.0
 
     def keycallback(self, event):
-        #print event.char
-        #print event.keycode
-        #print event.keysym
+        # print event.char
+        # print event.keycode
+        # print event.keysym
         if event.keysym == "Control_L":
             self.lctrl_pressed = True
 
