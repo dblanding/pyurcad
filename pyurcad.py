@@ -2595,26 +2595,18 @@ class PyurCad(tk.Tk):
     def launch_tut1(self):
 
         #The vectors of the Coordinate System (CS)
+        csox, csoy = self.ep2cp((0, 0))     #Origin
+        csax, csay = self.ep2cp((100, 0))   #X
+        csbx, csby = self.ep2cp((0, 100))   #Y
         self.cs = [
-            matrix.Vector3D(0.0, 0.0, 0.0), #Origin
-            matrix.Vector3D(0.5, 0.0, 0.0), #X
-            matrix.Vector3D(0.0, 0.5, 0.0), #Y
-            matrix.Vector3D(0.0 ,0.0, 0.5), #Z
+            matrix.Vector3D(csox, csoy, 0.0), #Origin
+            matrix.Vector3D(csax, csay, 0.0), #X
+            matrix.Vector3D(csbx, csby, 0.0), #Y
+            matrix.Vector3D(csox, csoy, 100), #Z
             ]
 
         #Let these be in World-coordinates (worldview-matrix already applied)
         #In right-handed, counter-clockwise order
-        self.cube = [
-            matrix.Vector3D(-0.5,0.5,-0.5),
-            matrix.Vector3D(0.5,0.5,-0.5),
-            matrix.Vector3D(0.5,-0.5,-0.5),
-            matrix.Vector3D(-0.5,-0.5,-0.5),
-            matrix.Vector3D(-0.5,0.5,0.5),
-            matrix.Vector3D(0.5,0.5,0.5),
-            matrix.Vector3D(0.5,-0.5,0.5),
-            matrix.Vector3D(-0.5,-0.5,0.5)
-            ]
-
         p1x, p1y = self.ep2cp((-100, 100))
         p2x, p2y = self.ep2cp((100, 100))
         p3x, p3y = self.ep2cp((100, -100))
@@ -2630,9 +2622,11 @@ class PyurCad(tk.Tk):
             matrix.Vector3D(p4x, p4y, 100)
             ]
 
-        self.dotx = matrix.Vector3D(-0.5, 0.0, 0.0)
-        self.doty = matrix.Vector3D(0.0, -0.5, 0.0)
-        self.dotz = matrix.Vector3D(0.0, 0.0, -0.5)
+        csdx, csdy = self.ep2cp((-100, 0))   #X
+        csex, csey = self.ep2cp((0, -100))   #Y
+        self.dotx = matrix.Vector3D(csdx, csdy, 0.0)
+        self.doty = matrix.Vector3D(csex, csey, 0.0)
+        self.dotz = matrix.Vector3D(csox, csoy, -100)
 
         # Define the vertices that compose each of the 6 faces. These numbers are
         # indices to the vertices list defined above.
@@ -2693,24 +2687,6 @@ class PyurCad(tk.Tk):
 
         self.update()
 
-    def toScreenCoords(self, pv):
-        # print str(pv)
-        #Projection will project to [-1; 1] so the points need to be scaled on screen
-        px = min(((pv.x+1)*0.5*self.WIDTH), self.WIDTH-1)
-        #Reflect the Y-coordinate because the screen it goes downwards
-        py = min(((1-(pv.y+1)*0.5)*self.HEIGHT), self.HEIGHT-1)
-
-        return matrix.Vector3D(int(px), int(py), 1)
-
-        #Screen matrix
-        # SC = matrix.Matrix(4, 4)
-        # SC[(0,0)] = self.WIDTH/2
-        # SC[(1,1)] = -self.HEIGHT/2
-        # SC[(0,3)] = self.WIDTH/2
-        # SC[(1,3)] = self.HEIGHT/2
-
-        # return SC*pv
-
     def update(self):
         
         for item in self.canvas.find_withtag('demo'):
@@ -2741,14 +2717,14 @@ class PyurCad(tk.Tk):
         #The Transformation matrix
         self.Tsf = self.Scale*self.Shear*self.Rot*self.Tr
 
-        inviewingvolume = False
+        inviewingvolume = True
 
         #First draw the lines of the CS
         tvs = [] #transformed vectors
         for v in self.cs:
             r = self.Tsf*v
             ps = self.Proj*r
-            tvs.append(self.toScreenCoords(ps))
+            tvs.append(ps)
 
             #if only one vertex is in the screen (x[-1,1], y[-1,1], z[-1,1]) then we draw the whole CS 
             if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
@@ -2760,7 +2736,7 @@ class PyurCad(tk.Tk):
             self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[3].x, tvs[3].y, fill='blue', tags='demo') 
         #End of drawing of the lines of the CS
 
-        inviewingvolume = False
+        inviewingvolume = True
 
         #Cube
         for i in range(len(self.cubefaces)):
@@ -2776,10 +2752,8 @@ class PyurCad(tk.Tk):
                 ps = self.Proj*r
                 
                 # Put the screenpoint in the list of transformed vertices
-                p = ps # self.toScreenCoords(ps)
-                
-                x = int(p.x)
-                y = int(p.y)
+                x = int(ps.x)
+                y = int(ps.y)
                 poly.append((x, y))
 
             for k in range(len(poly)-1):
@@ -2789,7 +2763,7 @@ class PyurCad(tk.Tk):
             self.canvas.create_line(poly[len(poly)-1][0], poly[len(poly)-1][1],
                                    poly[0][0], poly[0][1], fill='white', tags='demo') 
 
-        inviewingvolume = False
+        inviewingvolume = True
 
         #Dotx
         r = self.Tsf*self.dotx
@@ -2798,11 +2772,10 @@ class PyurCad(tk.Tk):
             inviewingvolume = True
 
         if inviewingvolume:
-            p = self.toScreenCoords(ps)
-            x, y = int(p.x), int(p.y)
+            x, y = int(ps.x), int(ps.y)
             self.canvas.create_rectangle(x, y, x+10, y+10, fill="red", tags='demo')
 
-        inviewingvolume = False
+        inviewingvolume = True
 
         #Doty
         r = self.Tsf*self.doty
@@ -2811,11 +2784,10 @@ class PyurCad(tk.Tk):
             inviewingvolume = True
 
         if inviewingvolume:
-            p = self.toScreenCoords(ps)
-            x, y = int(p.x), int(p.y)
+            x, y = int(ps.x), int(ps.y)
             self.canvas.create_rectangle(x, y, x+10, y+10, fill="green", tags='demo')
 
-        inviewingvolume = False
+        inviewingvolume = True
 
         #Dotz
         r = self.Tsf*self.dotz
@@ -2824,12 +2796,12 @@ class PyurCad(tk.Tk):
             inviewingvolume = True
 
         if inviewingvolume:
-            p = self.toScreenCoords(ps)
-            x, y = int(p.x), int(p.y)
+            x, y = int(ps.x), int(ps.y)
             self.canvas.create_rectangle(x, y, x+10, y+10, fill="blue", tags='demo')
 
     def dragcallback(self, event):
-        # It's also possible to use the angle calculated from the mousepos-change from the center of the screen:
+        # It's also possible to use the angle calculated from the mousepos-change
+        # from the center of the screen:
         # dx = event.x - Simulation.WIDTH/2
         # dy = event.y - Simulation.HEIGHT/2
         # ang = math.degrees(math.atan2(dy, dx))
