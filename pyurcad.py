@@ -2651,44 +2651,21 @@ class PyurCad(tk.Tk):
         self.calc_points()
         self.update()
 
-    def calc_points(self):
-        #The vectors of the Coordinate System (CS)
-        csox, csoy = self.ep2cp((0, 0))     #Origin
-        csax, csay = self.ep2cp((100, 0))   #X
-        csbx, csby = self.ep2cp((0, 100))   #Y
-        self.cs = [
-            matrix.Vector3D(csox, csoy, 0.0), #Origin
-            matrix.Vector3D(csax, csay, 0.0), #X
-            matrix.Vector3D(csbx, csby, 0.0), #Y
-            matrix.Vector3D(csox, csoy, 100), #Z
-            ]
-
-        #Let these be in World-coordinates (worldview-matrix already applied)
-        #In right-handed, counter-clockwise order
+    def calc_points(self):  # just 4 points in a square pattern
         p1x, p1y = self.ep2cp((-100, 100))
         p2x, p2y = self.ep2cp((100, 100))
         p3x, p3y = self.ep2cp((100, -100))
         p4x, p4y = self.ep2cp((-100, -100))
-        self.cube = [
-            matrix.Vector3D(p1x, p1y, -100),
-            matrix.Vector3D(p2x, p2y, -100),
-            matrix.Vector3D(p3x, p3y, -100),
-            matrix.Vector3D(p4x, p4y, -100),
-            matrix.Vector3D(p1x, p1y, 100),
-            matrix.Vector3D(p2x, p2y, 100),
-            matrix.Vector3D(p3x, p3y, 100),
-            matrix.Vector3D(p4x, p4y, 100)
+        self.square = [
+            matrix.Vector3D(p1x, p1y, 0),
+            matrix.Vector3D(p2x, p2y, 0),
+            matrix.Vector3D(p3x, p3y, 0),
+            matrix.Vector3D(p4x, p4y, 0)
             ]
 
-        csdx, csdy = self.ep2cp((-100, 0))   #X
-        csex, csey = self.ep2cp((0, -100))   #Y
-        self.dotx = matrix.Vector3D(csdx, csdy, 0.0)
-        self.doty = matrix.Vector3D(csex, csey, 0.0)
-        self.dotz = matrix.Vector3D(csox, csoy, -100)
-
-        # Define the vertices that compose each of the 6 faces. These numbers are
-        # indices to the vertices list defined above.
-        self.cubefaces = [(0,1,2,3),(1,5,6,2),(5,4,7,6),(4,0,3,7),(0,4,5,1),(3,2,6,7)] 
+        # Define the point pairs that define 4 lines.
+        # (indices to the vertices list defined above.)
+        self.lines = [(0, 1), (1, 2), (2, 3), (3, 0)] 
 
     def update(self):
         
@@ -2720,25 +2697,11 @@ class PyurCad(tk.Tk):
         #The Transformation matrix
         self.Tsf = self.Scale*self.Shear*self.Rot*self.Tr
 
-        inviewingvolume = True
-
-        #First draw the lines of the CS
-        tvs = [] #transformed vectors
-        for v in self.cs:
-            r = self.Tsf*v
-            ps = self.Proj*r
-            tvs.append(ps)
-
-        self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[1].x, tvs[1].y, fill='red', tags='demo') 
-        self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[2].x, tvs[2].y, fill='green', tags='demo') 
-        self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[3].x, tvs[3].y, fill='blue', tags='demo') 
-        #End of drawing of the lines of the CS
-
         #Cube
-        for i in range(len(self.cubefaces)):
-            poly = [] #transformed polygon
-            for j in range(len(self.cubefaces[0])):
-                v = self.cube[self.cubefaces[i][j]]
+        poly = [] #transformed polygon
+        for i in range(len(self.lines)):
+            for j in range(len(self.lines[0])):
+                v = self.square[self.lines[i][j]]
 
                 # Scale, Shear, Rotate the vertex around X axis, then around Y axis, and finally around Z axis and Translate.
                 r = self.Tsf*v
@@ -2757,25 +2720,6 @@ class PyurCad(tk.Tk):
 
             self.canvas.create_line(poly[len(poly)-1][0], poly[len(poly)-1][1],
                                    poly[0][0], poly[0][1], fill='white', tags='demo') 
-
-        #Dotx
-        r = self.Tsf*self.dotx
-        ps = self.Proj*r
-        x, y = int(ps.x), int(ps.y)
-        self.canvas.create_rectangle(x, y, x+10, y+10, fill="red", tags='demo')
-
-        #Doty
-        r = self.Tsf*self.doty
-        ps = self.Proj*r
-        x, y = int(ps.x), int(ps.y)
-        self.canvas.create_rectangle(x, y, x+10, y+10, fill="green", tags='demo')
-
-        #Dotz
-        r = self.Tsf*self.dotz
-        ps = self.Proj*r
-
-        x, y = int(ps.x), int(ps.y)
-        self.canvas.create_rectangle(x, y, x+10, y+10, fill="blue", tags='demo')
 
     def dragcallback(self, event):
         # It's also possible to use the angle calculated from the mousepos-change
