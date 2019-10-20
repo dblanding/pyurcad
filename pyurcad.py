@@ -2554,7 +2554,7 @@ class PyurCad(tk.Tk):
                               width=800, height=540)
         self.canvas.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.BOTH)
         self.bindings()  # original cadvas bindings
-        self.canvas.move_can(300, 300)  # Put 0,0 near lower left corner
+        self.canvas.move_can(300, 300)  # location of origin (0,0)
 
     def bind_menu_accelrator_keys(self):
         self.bind('<KeyPress-F1>', self.on_about_menu_clicked)
@@ -2590,48 +2590,11 @@ class PyurCad(tk.Tk):
     WIDTH = 800.0
     HEIGHT = 540.0
     RATE = 3
-    SPEED = 2
+    SPEED = 1
 
     def launch_tut1(self):
 
-        #The vectors of the Coordinate System (CS)
-        csox, csoy = self.ep2cp((0, 0))     #Origin
-        csax, csay = self.ep2cp((100, 0))   #X
-        csbx, csby = self.ep2cp((0, 100))   #Y
-        self.cs = [
-            matrix.Vector3D(csox, csoy, 0.0), #Origin
-            matrix.Vector3D(csax, csay, 0.0), #X
-            matrix.Vector3D(csbx, csby, 0.0), #Y
-            matrix.Vector3D(csox, csoy, 100), #Z
-            ]
-
-        #Let these be in World-coordinates (worldview-matrix already applied)
-        #In right-handed, counter-clockwise order
-        p1x, p1y = self.ep2cp((-100, 100))
-        p2x, p2y = self.ep2cp((100, 100))
-        p3x, p3y = self.ep2cp((100, -100))
-        p4x, p4y = self.ep2cp((-100, -100))
-        self.cube = [
-            matrix.Vector3D(p1x, p1y, -100),
-            matrix.Vector3D(p2x, p2y, -100),
-            matrix.Vector3D(p3x, p3y, -100),
-            matrix.Vector3D(p4x, p4y, -100),
-            matrix.Vector3D(p1x, p1y, 100),
-            matrix.Vector3D(p2x, p2y, 100),
-            matrix.Vector3D(p3x, p3y, 100),
-            matrix.Vector3D(p4x, p4y, 100)
-            ]
-
-        csdx, csdy = self.ep2cp((-100, 0))   #X
-        csex, csey = self.ep2cp((0, -100))   #Y
-        self.dotx = matrix.Vector3D(csdx, csdy, 0.0)
-        self.doty = matrix.Vector3D(csex, csey, 0.0)
-        self.dotz = matrix.Vector3D(csox, csoy, -100)
-
-        # Define the vertices that compose each of the 6 faces. These numbers are
-        # indices to the vertices list defined above.
-        self.cubefaces = [(0,1,2,3),(1,5,6,2),(5,4,7,6),(4,0,3,7),(0,4,5,1),(3,2,6,7)] 
-
+        self.calc_points()
         self.ang = [0.0, 0.0, 0.0] # phi(x), theta(y), psi(z)
         self.trans = [0.0, 0.0, 0.0] # translation (x, y, z)
         # (e.g. if want to move the Camera to (0, 0, 2),
@@ -2685,7 +2648,47 @@ class PyurCad(tk.Tk):
         self.prevmouseX = 0.0
         self.prevmouseY = 0.0
 
+        self.calc_points()
         self.update()
+
+    def calc_points(self):
+        #The vectors of the Coordinate System (CS)
+        csox, csoy = self.ep2cp((0, 0))     #Origin
+        csax, csay = self.ep2cp((100, 0))   #X
+        csbx, csby = self.ep2cp((0, 100))   #Y
+        self.cs = [
+            matrix.Vector3D(csox, csoy, 0.0), #Origin
+            matrix.Vector3D(csax, csay, 0.0), #X
+            matrix.Vector3D(csbx, csby, 0.0), #Y
+            matrix.Vector3D(csox, csoy, 100), #Z
+            ]
+
+        #Let these be in World-coordinates (worldview-matrix already applied)
+        #In right-handed, counter-clockwise order
+        p1x, p1y = self.ep2cp((-100, 100))
+        p2x, p2y = self.ep2cp((100, 100))
+        p3x, p3y = self.ep2cp((100, -100))
+        p4x, p4y = self.ep2cp((-100, -100))
+        self.cube = [
+            matrix.Vector3D(p1x, p1y, -100),
+            matrix.Vector3D(p2x, p2y, -100),
+            matrix.Vector3D(p3x, p3y, -100),
+            matrix.Vector3D(p4x, p4y, -100),
+            matrix.Vector3D(p1x, p1y, 100),
+            matrix.Vector3D(p2x, p2y, 100),
+            matrix.Vector3D(p3x, p3y, 100),
+            matrix.Vector3D(p4x, p4y, 100)
+            ]
+
+        csdx, csdy = self.ep2cp((-100, 0))   #X
+        csex, csey = self.ep2cp((0, -100))   #Y
+        self.dotx = matrix.Vector3D(csdx, csdy, 0.0)
+        self.doty = matrix.Vector3D(csex, csey, 0.0)
+        self.dotz = matrix.Vector3D(csox, csoy, -100)
+
+        # Define the vertices that compose each of the 6 faces. These numbers are
+        # indices to the vertices list defined above.
+        self.cubefaces = [(0,1,2,3),(1,5,6,2),(5,4,7,6),(4,0,3,7),(0,4,5,1),(3,2,6,7)] 
 
     def update(self):
         
@@ -2726,21 +2729,13 @@ class PyurCad(tk.Tk):
             ps = self.Proj*r
             tvs.append(ps)
 
-            #if only one vertex is in the screen (x[-1,1], y[-1,1], z[-1,1]) then we draw the whole CS 
-            if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
-                inviewingvolume = True
-
-        if inviewingvolume:
-            self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[1].x, tvs[1].y, fill='red', tags='demo') 
-            self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[2].x, tvs[2].y, fill='green', tags='demo') 
-            self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[3].x, tvs[3].y, fill='blue', tags='demo') 
+        self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[1].x, tvs[1].y, fill='red', tags='demo') 
+        self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[2].x, tvs[2].y, fill='green', tags='demo') 
+        self.canvas.create_line(tvs[0].x, tvs[0].y, tvs[3].x, tvs[3].y, fill='blue', tags='demo') 
         #End of drawing of the lines of the CS
-
-        inviewingvolume = True
 
         #Cube
         for i in range(len(self.cubefaces)):
-            inviewingvolume = False
             poly = [] #transformed polygon
             for j in range(len(self.cubefaces[0])):
                 v = self.cube[self.cubefaces[i][j]]
@@ -2763,41 +2758,24 @@ class PyurCad(tk.Tk):
             self.canvas.create_line(poly[len(poly)-1][0], poly[len(poly)-1][1],
                                    poly[0][0], poly[0][1], fill='white', tags='demo') 
 
-        inviewingvolume = True
-
         #Dotx
         r = self.Tsf*self.dotx
         ps = self.Proj*r
-        if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
-            inviewingvolume = True
-
-        if inviewingvolume:
-            x, y = int(ps.x), int(ps.y)
-            self.canvas.create_rectangle(x, y, x+10, y+10, fill="red", tags='demo')
-
-        inviewingvolume = True
+        x, y = int(ps.x), int(ps.y)
+        self.canvas.create_rectangle(x, y, x+10, y+10, fill="red", tags='demo')
 
         #Doty
         r = self.Tsf*self.doty
         ps = self.Proj*r
-        if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
-            inviewingvolume = True
-
-        if inviewingvolume:
-            x, y = int(ps.x), int(ps.y)
-            self.canvas.create_rectangle(x, y, x+10, y+10, fill="green", tags='demo')
-
-        inviewingvolume = True
+        x, y = int(ps.x), int(ps.y)
+        self.canvas.create_rectangle(x, y, x+10, y+10, fill="green", tags='demo')
 
         #Dotz
         r = self.Tsf*self.dotz
         ps = self.Proj*r
-        if (-1.0 <= ps.x <= 1.0) and (-1.0 <= ps.y <= 1.0) and (-1.0 <= ps.z <= 1.0):
-            inviewingvolume = True
 
-        if inviewingvolume:
-            x, y = int(ps.x), int(ps.y)
-            self.canvas.create_rectangle(x, y, x+10, y+10, fill="blue", tags='demo')
+        x, y = int(ps.x), int(ps.y)
+        self.canvas.create_rectangle(x, y, x+10, y+10, fill="blue", tags='demo')
 
     def dragcallback(self, event):
         # It's also possible to use the angle calculated from the mousepos-change
@@ -2833,7 +2811,7 @@ class PyurCad(tk.Tk):
                     self.ang[2] -= 360.0
                 if self.ang[2] < 0.0:
                     self.ang[2] += 360.0
-
+            print(self.ang[0], self.ang[1], self.ang[2])
             self.update()
 
         self.prevmouseX = event.x
