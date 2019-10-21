@@ -2492,8 +2492,8 @@ class PyurCad(tk.Tk):
                                    command=lambda: print(self.op))
         self.debugmenu.add_command(label="draw Workplane",
                                    command=self.draw_workplane)
-        self.debugmenu.add_command(label="Launch Tut1 (Use MMB)",
-                                   command=self.launch_tut1)
+        self.debugmenu.add_command(label="3D Demo (MMB to rotate)",
+                                   command=self.launch_demo)
         self.menubar.add_cascade(label="Debug", menu=self.debugmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
@@ -2584,19 +2584,34 @@ class PyurCad(tk.Tk):
                              accelerator=accelrator_key, command=eval(command_callback))
 
     # =======================================================================
-    # Rotating Square Demo (Based on tut1)
+    # 3D Demo
     # =======================================================================
-
+    """
+    Works with zooming canvas (same as 2D) for pan and zoom.
+        Ctrl-LMB -> Pan (X & Y)
+        Ctrl-RMB -> Zoom (Z)
+    Also does Rotation.
+        MMB controls both X and Y axis rotation.
+        Ctrl-MMB controls Z axis rotation.
+    """
     RATE = 3
     SPEED = 1
 
-    def launch_tut1(self):
-        # Just draw a simple square, 200mm x 200mm
-        self.square = [
+    def launch_demo(self):
+        # simple (half) cube
+        # base square, 200mm x 200mm
+        self.square1 = [
             matrix.Vector3D(-100, 100, 0),
             matrix.Vector3D(100, 100, 0),
             matrix.Vector3D(100, -100, 0),
             matrix.Vector3D(-100, -100, 0)
+            ]
+        # top square
+        self.square2 = [
+            matrix.Vector3D(-100, 100, 100),
+            matrix.Vector3D(100, 100, 100),
+            matrix.Vector3D(100, -100, 100),
+            matrix.Vector3D(-100, -100, 100)
             ]
 
         self.ang = [0.0, 0.0, 0.0] # phi(x), theta(y), psi(z)
@@ -2684,8 +2699,8 @@ class PyurCad(tk.Tk):
         self.Tsf = self.Scale*self.Shear*self.Rot*self.Tr
 
         #Cube
-        poly = []
-        for point in self.square:
+        poly1 = []  # 4 points (corners) of bottom face
+        for point in self.square1:
             # Apply transform matrix
             r = self.Tsf*point
             # Transform the point from 3D to 2D
@@ -2693,15 +2708,30 @@ class PyurCad(tk.Tk):
             # Convert point from ECS to Canvas coordinates
             cx, cy = self.ep2cp((ps.x, ps.y))
             # Put the screenpoint in the list of transformed vertices
-            poly.append((int(cx), int(cy)))
-        # Draw lines of the square
-        for k in range(len(poly)):
-            try:
-                self.canvas.create_line(poly[k][0], poly[k][1], poly[k+1][0],
-                                       poly[k+1][1], fill='red', tags='demo')
-            except IndexError:
-                self.canvas.create_line(poly[k][0], poly[k][1], poly[0][0],
-                                       poly[0][1], fill='red', tags='demo')
+            poly1.append((int(cx), int(cy)))
+        poly2 = []  # 4 points (corners) of top face
+        for point in self.square2:
+            # Apply transform matrix
+            r = self.Tsf*point
+            # Transform the point from 3D to 2D
+            ps = self.Proj*r
+            # Convert point from ECS to Canvas coordinates
+            cx, cy = self.ep2cp((ps.x, ps.y))
+            # Put the screenpoint in the list of transformed vertices
+            poly2.append((int(cx), int(cy)))
+        # Draw lines
+        for poly in (poly1, poly2):
+            for k in range(4):  # draw edges of top and bot faces
+                try:
+                    self.canvas.create_line(poly[k][0], poly[k][1], poly[k+1][0],
+                                           poly[k+1][1], fill='red', tags='demo')
+                except IndexError:
+                    self.canvas.create_line(poly[k][0], poly[k][1], poly[0][0],
+                                           poly[0][1], fill='red', tags='demo')
+        for i in range(4):  # draw edges from top face to bot face
+            self.canvas.create_line(poly1[i][0], poly1[i][1], poly2[i][0],
+                                           poly2[i][1], fill='red', tags='demo')
+
     def dragcallback(self, event):
         # It's also possible to use the angle calculated from the mousepos-change
         # from the center of the screen:
