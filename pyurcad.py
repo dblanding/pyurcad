@@ -2591,6 +2591,13 @@ class PyurCad(tk.Tk):
     SPEED = 1
 
     def launch_tut1(self):
+        # Just draw a simple square, 200mm x 200mm
+        self.square = [
+            matrix.Vector3D(-100, 100, 0),
+            matrix.Vector3D(100, 100, 0),
+            matrix.Vector3D(100, -100, 0),
+            matrix.Vector3D(-100, -100, 0)
+            ]
 
         self.ang = [0.0, 0.0, 0.0] # phi(x), theta(y), psi(z)
         self.trans = [0.0, 0.0, 0.0] # translation (x, y, z)
@@ -2647,20 +2654,7 @@ class PyurCad(tk.Tk):
 
         self.update()
 
-    def calc_points(self):  # just 4 points in a square pattern
-        p1x, p1y = self.ep2cp((-100, 100))
-        p2x, p2y = self.ep2cp((100, 100))
-        p3x, p3y = self.ep2cp((100, -100))
-        p4x, p4y = self.ep2cp((-100, -100))
-        self.square = [
-            matrix.Vector3D(p1x, p1y, 0),
-            matrix.Vector3D(p2x, p2y, 0),
-            matrix.Vector3D(p3x, p3y, 0),
-            matrix.Vector3D(p4x, p4y, 0)
-            ]
-
     def update(self):
-        self.calc_points()
         for item in self.canvas.find_withtag('demo'):
             self.canvas.delete(item)
 
@@ -2692,13 +2686,15 @@ class PyurCad(tk.Tk):
         #Cube
         poly = []
         for point in self.square:
+            # Apply transform matrix
             r = self.Tsf*point
             # Transform the point from 3D to 2D
             ps = self.Proj*r
+            # Convert point from ECS to Canvas coordinates
+            cx, cy = self.ep2cp((ps.x, ps.y))
             # Put the screenpoint in the list of transformed vertices
-            x = int(ps.x)
-            y = int(ps.y)
-            poly.append((x, y))
+            poly.append((int(cx), int(cy)))
+        # Draw lines of the square
         for k in range(len(poly)):
             try:
                 self.canvas.create_line(poly[k][0], poly[k][1], poly[k+1][0],
