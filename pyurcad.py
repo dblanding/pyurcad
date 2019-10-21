@@ -2584,17 +2584,14 @@ class PyurCad(tk.Tk):
                              accelerator=accelrator_key, command=eval(command_callback))
 
     # =======================================================================
-    # Rotating Cube Demo (Modification of tut1)
+    # Rotating Square Demo (Based on tut1)
     # =======================================================================
 
-    WIDTH = 800.0
-    HEIGHT = 540.0
     RATE = 3
     SPEED = 1
 
     def launch_tut1(self):
 
-        self.calc_points()
         self.ang = [0.0, 0.0, 0.0] # phi(x), theta(y), psi(z)
         self.trans = [0.0, 0.0, 0.0] # translation (x, y, z)
         # (e.g. if want to move the Camera to (0, 0, 2),
@@ -2648,7 +2645,6 @@ class PyurCad(tk.Tk):
         self.prevmouseX = 0.0
         self.prevmouseY = 0.0
 
-        self.calc_points()
         self.update()
 
     def calc_points(self):  # just 4 points in a square pattern
@@ -2663,12 +2659,8 @@ class PyurCad(tk.Tk):
             matrix.Vector3D(p4x, p4y, 0)
             ]
 
-        # Define the point pairs that define 4 lines.
-        # (indices to the vertices list defined above.)
-        self.lines = [(0, 1), (1, 2), (2, 3), (3, 0)] 
-
     def update(self):
-        
+        self.calc_points()
         for item in self.canvas.find_withtag('demo'):
             self.canvas.delete(item)
 
@@ -2698,29 +2690,22 @@ class PyurCad(tk.Tk):
         self.Tsf = self.Scale*self.Shear*self.Rot*self.Tr
 
         #Cube
-        poly = [] #transformed polygon
-        for i in range(len(self.lines)):
-            for j in range(len(self.lines[0])):
-                v = self.square[self.lines[i][j]]
-
-                # Scale, Shear, Rotate the vertex around X axis, then around Y axis, and finally around Z axis and Translate.
-                r = self.Tsf*v
-
-                # Transform the point from 3D to 2D
-                ps = self.Proj*r
-                
-                # Put the screenpoint in the list of transformed vertices
-                x = int(ps.x)
-                y = int(ps.y)
-                poly.append((x, y))
-
-            for k in range(len(poly)-1):
+        poly = []
+        for point in self.square:
+            r = self.Tsf*point
+            # Transform the point from 3D to 2D
+            ps = self.Proj*r
+            # Put the screenpoint in the list of transformed vertices
+            x = int(ps.x)
+            y = int(ps.y)
+            poly.append((x, y))
+        for k in range(len(poly)):
+            try:
                 self.canvas.create_line(poly[k][0], poly[k][1], poly[k+1][0],
-                                       poly[k+1][1], fill='white', tags='demo') 
-
-            self.canvas.create_line(poly[len(poly)-1][0], poly[len(poly)-1][1],
-                                   poly[0][0], poly[0][1], fill='white', tags='demo') 
-
+                                       poly[k+1][1], fill='red', tags='demo')
+            except IndexError:
+                self.canvas.create_line(poly[k][0], poly[k][1], poly[0][0],
+                                       poly[0][1], fill='red', tags='demo')
     def dragcallback(self, event):
         # It's also possible to use the angle calculated from the mousepos-change
         # from the center of the screen:
