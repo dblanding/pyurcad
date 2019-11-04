@@ -228,7 +228,7 @@ class PyurCad(tk.Tk):
             elif 'cc' in ent_dict:
                 attribs = ent_dict['cc']
                 e = entities.CC(attribs)
-                self.cline_gen(e)
+                self.ccirc_gen(e)
             elif 'gl' in ent_dict:
                 attribs = ent_dict['gl']
                 e = entities.GL(attribs)
