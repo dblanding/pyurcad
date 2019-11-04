@@ -1818,7 +1818,7 @@ class PyurCad(tk.Tk):
         '''Delete all.'''
 
         self.curr.clear()
-        self.canvas.delete(ALL)
+        self.canvas.delete(tk.ALL)
         self.cl_list = []
 
     # =======================================================================
