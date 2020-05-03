@@ -67,7 +67,7 @@ def dxf2native(filename):
             text = e.dxfattribs()['text']
             style = e.dxfattribs()['style']
             size = e.dxfattribs()['height']
-            attribs = (coords, text, style, size, 'cyan')  # no dxf color attrib
+            attribs = (coords, text, style, size, 'white')  # no dxf color attrib
             drawlist.append({'tx': attribs})
             
     return drawlist

@@ -20,7 +20,7 @@ import matrix
 
 GEOMCOLOR = 'white'     # color of geometry entities
 CONSTRCOLOR = 'magenta'  # color of construction entities
-TEXTCOLOR = 'cyan'      # color of text entities
+TEXTCOLOR = 'white'     # color of text entities
 DIMCOLOR = 'red'        # color of dimension entities
 RUBBERCOLOR = 'yellow'  # color of (temporary) rubber elements
 TOOLBARCOLS = 2         # number of columns of toolbar buttons

@@ -81,7 +81,7 @@ class TxtDialog(Toplevel):
         color = self.caller.textcolor
         style = self.caller.textstyle
         size = self.caller.textsize
-        text = ""
+        text = self.xdisplay.get().strip("'")
         self.putx(text)
         self.puty(color)
         self.putz(size)
