@@ -53,7 +53,7 @@ class PyurCad(tk.Tk):
                                'split': "Split Line",
                                'join': "Join 2 Lines",
                                'fillet': "Fillet 2 Adjacent Lines",
-                               'translate': "Translate Geometry",
+                               'translate': "Translate Geometry (&/or Text)",
                                'rotate': "Rotate Geometry"}
 
     tool_bar_functions = ('noop', 'hvcl', 'hcl', 'vcl', 'cl2p', 'acl', 'clrefang',
@@ -1664,10 +1664,18 @@ class PyurCad(tk.Tk):
 
     def text_move(self, p=None):
         """Move existing text to new point."""
+        self.text_copy(p=p, move=True)
+
+    def text_copy(self, p=None, move=None):
+        """Copy existing text to new point."""
 
         if not self.obj_stack:
             self.set_sel_mode('items')
-            self.update_message_bar('Select text to move.')
+            if move:
+                action = 'move'
+            else:
+                action = 'copy'
+            self.update_message_bar(f'Select text to {action}.')
         elif not self.pt_stack:
             if not self.rubber:
                 for item_tuple in self.obj_stack:
@@ -1702,8 +1710,9 @@ class PyurCad(tk.Tk):
                 attribs = tuple(attribs)
                 new_tx = entities.TX(attribs)
                 self.text_gen(new_tx)
-                del self.curr[handle]
-                self.canvas.delete(handle)
+                if move:
+                    del self.curr[handle]
+                    self.canvas.delete(handle)
             if self.rubber:
                 self.canvas.delete(self.rubber)
                 self.rubber = None
@@ -2468,6 +2477,8 @@ class PyurCad(tk.Tk):
         self.textmenu = tk.Menu(self.menubar, tearoff=1)
         self.textmenu.add_command(label="Create Text",
                                   command=lambda k="text_enter": self.dispatch(k))
+        self.textmenu.add_command(label="Copy Text",
+                                  command=lambda k="text_copy": self.dispatch(k))
         self.textmenu.add_command(label="Move Text",
                                   command=lambda k="text_move": self.dispatch(k))
         self.textmenu.add_command(label="Edit Text",
