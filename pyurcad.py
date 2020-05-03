@@ -1335,19 +1335,18 @@ class PyurCad(tk.Tk):
                 self.arcc2p()
 
     def translate(self, p=None):
-        """Move (or copy) selected geometry item(s) by two points.
+        """Move (or copy) selected geometry &/or text by two points.
 
         To copy items, enter number of copies.
         Otherwise, item(s) will be moved (not copied)."""
 
-        if not self.obj_stack and not self.pt_stack and \
-           not self.float_stack:
+        if not self.obj_stack and not self.pt_stack and not self.float_stack:
             self.set_sel_mode('items')
             self.allow_list = 1
-            msg = 'Specify number of copies or select geometry item(s) to move'
+            msg = 'Specify number of copies or select item(s) to move'
             self.update_message_bar(msg)
         elif not self.obj_stack and not self.pt_stack:
-            self.update_message_bar('Select geometry item(s) to move')
+            self.update_message_bar('Select item(s) to move')
         elif self.obj_stack and not self.pt_stack:
             self.set_sel_mode('pnt')
             self.allow_list = 0
@@ -1390,8 +1389,13 @@ class PyurCad(tk.Tk):
                                 pnts[1], pnts[2], pnts[3])
                         ga = entities.GA((pnts, GEOMCOLOR))
                         self.garc_gen(ga)
-                else:
-                    print('Only geometry type items can be moved with this command.')
+                elif item.type is 'tx':
+                    coords, text, style, size, color = item.get_attribs()
+                    for x in range(repeat):
+                        coords = (gh.add_pt(coords, dp))
+                        tx = entities.TX((coords, text, style, size, color))
+                        self.text_gen(tx)
+
             if delete_original:
                 for handle in handles:
                     self.canvas.delete(handle)
