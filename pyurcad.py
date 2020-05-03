@@ -1662,8 +1662,8 @@ class PyurCad(tk.Tk):
             if self.op_stack:
                 self.op = self.op_stack.pop()
 
-    def text_move(self, p=None):
-        """Move existing text to new point."""
+    def text_copy(self, p=None):
+        """Copy existing text to new point."""
 
         if not self.obj_stack:
             self.set_sel_mode('items')
@@ -1702,8 +1702,9 @@ class PyurCad(tk.Tk):
                 attribs = tuple(attribs)
                 new_tx = entities.TX(attribs)
                 self.text_gen(new_tx)
-                del self.curr[handle]
-                self.canvas.delete(handle)
+                # Next two lines would delete old text
+                #del self.curr[handle]
+                #self.canvas.delete(handle)
             if self.rubber:
                 self.canvas.delete(self.rubber)
                 self.rubber = None
@@ -2468,8 +2469,8 @@ class PyurCad(tk.Tk):
         self.textmenu = tk.Menu(self.menubar, tearoff=1)
         self.textmenu.add_command(label="Create Text",
                                   command=lambda k="text_enter": self.dispatch(k))
-        self.textmenu.add_command(label="Move Text",
-                                  command=lambda k="text_move": self.dispatch(k))
+        self.textmenu.add_command(label="Copy Text",
+                                  command=lambda k="text_copy": self.dispatch(k))
         self.textmenu.add_command(label="Edit Text",
                                   command=self.txt_params)
         self.menubar.add_cascade(label="Text", menu=self.textmenu)
