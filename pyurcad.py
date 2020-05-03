@@ -1493,8 +1493,8 @@ class PyurCad(tk.Tk):
         innerpts = gh.cline_box_intrsctn(dimdir, (xa, ya, xb, yb))
         ip1 = gh.closer(p1b, innerpts[0], innerpts[1])
         ip2 = gh.closer(p2b, innerpts[0], innerpts[1])
-        self.line_draw((ip1, p1b), color=color, tag=('d', dgidtag), arrow=LAST)
-        self.line_draw((ip2, p2b), color=color, tag=('d', dgidtag), arrow=LAST)
+        self.line_draw((ip1, p1b), color=color, tag=('d', dgidtag), arrow=tk.LAST)
+        self.line_draw((ip2, p2b), color=color, tag=('d', dgidtag), arrow=tk.LAST)
         # create extension lines
         # make ext line gap appear same size irrespective of zoom
         gap = self.canvas.c2w_dx(self.dimgap)

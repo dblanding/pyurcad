@@ -197,7 +197,8 @@ class DL:
 
 if __name__ == "__main__":
     attribs = ((50,50), "this is some text", 'Verdana', 10, 'cyan',)
-    t1 = TxObject(attribs)
+
+    t1 = TX(attribs)
     print(t1)
     print(t1.coords)
     t1.coords = (100, 100)
