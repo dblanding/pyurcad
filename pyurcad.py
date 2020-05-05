@@ -1485,7 +1485,17 @@ class PyurCad(tk.Tk):
         p1b = gh.proj_pt_on_line(dimdir, p1)
         p2b = gh.proj_pt_on_line(dimdir, p2)
         d = gh.p2p_dist(p1b, p2b) / self.unitscale
-        text = '%.3f' % d
+        if self.units == 'feet' and self.arch_dims.get():
+            feet = int(d)
+            inches = round((d - feet) * 12)
+            if inches == 12:
+                feet += 1
+                inches = 0
+            text1 = f"{feet}' - "
+            text2 = f'{inches}"'
+            text = text1 + text2
+        else:
+            text = '%.3f' % d
         x3, y3 = self.ep2cp(p3)
         tkid = self.canvas.create_text(x3, y3, fill=color, text=text)
         dgidtag = 'd%s' % tkid  # unique dimension group ID tag
@@ -2466,6 +2476,11 @@ class PyurCad(tk.Tk):
         self.menubar.add_cascade(label="Measure", menu=self.measmenu)
 
         self.dimmenu = tk.Menu(self.menubar, tearoff=1)
+        self.arch_dims = tk.BooleanVar()
+        self.arch_dims.set(False)
+        self.dimmenu.add_checkbutton(
+            label="Display dims in Architectural Format (units must be 'feet')",
+            onvalue=1, offvalue=0, variable=self.arch_dims)
         self.dimmenu.add_command(label="Dim Horizontal",
                                  command=lambda k="dim_h": self.dispatch(k))
         self.dimmenu.add_command(label="Dim Vertical",
