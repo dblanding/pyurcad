@@ -324,14 +324,14 @@ class PyurCad(tk.Tk):
             for item in self.obj_stack.pop():
                 if 'g' in self.canvas.gettags(item):
                     elem = self.curr[item]
-                    if elem.type is 'gl':
+                    if elem.type == 'gl':
                         p1, p2 = elem.coords
                         length = gh.p2p_dist(p1, p2) / self.unitscale
-                    elif elem.type is 'gc':
+                    elif elem.type == 'gc':
                         length = math.pi*2*elem.coords[1]/self.unitscale
-                    elif elem.type is 'cc':
+                    elif elem.type == 'cc':
                         length = math.pi*2*elem.coords[1]/self.unitscale
-                    elif elem.type is 'ga':
+                    elif elem.type == 'ga':
                         pc, r, a0, a1 = elem.coords
                         ang = float(self.canvas.itemcget(item, 'extent'))
                         length = math.pi*r*ang/180/self.unitscale
@@ -452,7 +452,7 @@ class PyurCad(tk.Tk):
         the full canvas. Also, when zooming in, some clines are completely off
         the canvas, so we need a way to keep them from getting lost."""
 
-        cl_keylist = [k for k, v in self.curr.items() if v.type is 'cl']
+        cl_keylist = [k for k, v in self.curr.items() if v.type == 'cl']
         for handle in cl_keylist:
             self.canvas.delete(handle)
             del self.curr[handle]
@@ -883,7 +883,7 @@ class PyurCad(tk.Tk):
     def line_draw(self, coords, color, arrow=None, tag='g'):
         """Create and display line segment between two pts. Return ID.
 
-        This is a low level method that accesses the canvas directly &
+        This == a low level method that accesses the canvas directly &
         returns tkid. The caller can save to self.curr if needed."""
         p1, p2 = coords
         xa, ya = self.ep2cp(p1)
@@ -1110,7 +1110,7 @@ class PyurCad(tk.Tk):
         y1 = y-r
         x2 = x+r
         y2 = y+r
-        if tag is 'r':
+        if tag == 'r':
             if self.rubber:
                 self.canvas.coords(self.rubber, x1, y1, x2, y2,)
                 self.canvas.itemconfig(self.rubber, start=a0, extent=ext)
@@ -1249,7 +1249,7 @@ class PyurCad(tk.Tk):
             item_tuple = self.obj_stack.pop()
             for item in item_tuple:
                 entity = self.curr[item]
-                if entity.type is 'gl':
+                if entity.type == 'gl':
                     line = item
                     p0 = self.pt_stack.pop()
                     (p1, p2), clr = self.curr[line].get_attribs()
@@ -1369,27 +1369,27 @@ class PyurCad(tk.Tk):
                 delete_original = True
                 repeat = 1
             for item in items:
-                if item.type is 'gl':
+                if item.type == 'gl':
                     pnts, _ = item.get_attribs()
                     for x in range(repeat):
                         pnts = (gh.add_pt(pnts[0], dp),
                                 gh.add_pt(pnts[1], dp))
                         gl = entities.GL((pnts, GEOMCOLOR))
                         self.gline_gen(gl)
-                elif item.type is 'gc':
+                elif item.type == 'gc':
                     pnts, _ = item.get_attribs()
                     for x in range(repeat):
                         pnts = (gh.add_pt(pnts[0], dp), pnts[1])
                         gc = entities.GC((pnts, GEOMCOLOR))
                         self.gcirc_gen(gc)
-                elif item.type is 'ga':
+                elif item.type == 'ga':
                     pnts, _ = item.get_attribs()
                     for x in range(repeat):
                         pnts = (gh.add_pt(pnts[0], dp),
                                 pnts[1], pnts[2], pnts[3])
                         ga = entities.GA((pnts, GEOMCOLOR))
                         self.garc_gen(ga)
-                elif item.type is 'tx':
+                elif item.type == 'tx':
                     coords, text, style, size, color = item.get_attribs()
                     for x in range(repeat):
                         coords = (gh.add_pt(coords, dp))
@@ -1433,20 +1433,20 @@ class PyurCad(tk.Tk):
                 delete_original = True
                 self.repeat = 1
             for item in items:
-                if item.type is 'gl':
+                if item.type == 'gl':
                     pnts, _ = item.get_attribs()
                     for x in range(self.repeat):
                         pnts = (gh.rotate_pt(pnts[0], A, ctr),
                                 gh.rotate_pt(pnts[1], A, ctr))
                         gl = entities.GL((pnts, GEOMCOLOR))
                         self.gline_gen(gl)
-                elif item.type is 'gc':
+                elif item.type == 'gc':
                     pnts, _ = item.get_attribs()
                     for x in range(self.repeat):
                         pnts = (gh.rotate_pt(pnts[0], A, ctr), pnts[1])
                         gc = entities.GC((pnts, GEOMCOLOR))
                         self.gcirc_gen(gc)
-                elif item.type is 'ga':
+                elif item.type == 'ga':
                     pnts, _ = item.get_attribs()
                     for x in range(self.repeat):
                         pnts = (gh.rotate_pt(pnts[0], A, ctr),
@@ -1741,7 +1741,7 @@ class PyurCad(tk.Tk):
             self.handle = self.obj_stack.pop()[0]
             self.obj_stack = []
             ent = self.curr[self.handle]
-            if ent.type is 'tx':
+            if ent.type == 'tx':
                 self.launch_txtdialog()
                 self.txtdialog.putx(ent.text)
                 self.txtdialog.puty(ent.color)
@@ -1782,7 +1782,7 @@ class PyurCad(tk.Tk):
                 tags = self.canvas.gettags(item)
                 if item in self.curr:
                     e = self.curr[item]
-                    if e.type is 'cl':
+                    if e.type == 'cl':
                         self.cl_list.remove(e.coords)
                     del self.curr[item]
                     self.canvas.delete(item)
@@ -1807,13 +1807,13 @@ class PyurCad(tk.Tk):
     def del_all_g(self):
         '''Delete all geometry.'''
 
-        delete = [k for k, v in self.curr.items() if v.type is 'gl']
+        delete = [k for k, v in self.curr.items() if v.type == 'gl']
         for k in delete:
             del self.curr[k]
-        delete = [k for k, v in self.curr.items() if v.type is 'gc']
+        delete = [k for k, v in self.curr.items() if v.type == 'gc']
         for k in delete:
             del self.curr[k]
-        delete = [k for k, v in self.curr.items() if v.type is 'ga']
+        delete = [k for k, v in self.curr.items() if v.type == 'ga']
         for k in delete:
             del self.curr[k]
         for item in self.canvas.find_withtag('g'):
@@ -1822,7 +1822,7 @@ class PyurCad(tk.Tk):
     def del_all_d(self):
         '''Delete all dimensions.'''
 
-        delete = [k for k, v in self.curr.items() if v.type is 'dl']
+        delete = [k for k, v in self.curr.items() if v.type == 'dl']
         for k in delete:
             del self.curr[k]
         for item in self.canvas.find_withtag('d'):
@@ -1831,7 +1831,7 @@ class PyurCad(tk.Tk):
     def del_all_t(self):
         '''Delete all text.'''
 
-        delete = [k for k, v in self.curr.items() if v.type is 'tx']
+        delete = [k for k, v in self.curr.items() if v.type == 'tx']
         for k in delete:
             del self.curr[k]
         for item in self.canvas.find_withtag('t'):
@@ -1981,19 +1981,19 @@ class PyurCad(tk.Tk):
     def add_draw(self, entity):
         """Add entity to current drawing."""
 
-        if entity.type is 'cl':
+        if entity.type == 'cl':
             self.cline_gen(entity.coords)  # This one takes coords
-        elif entity.type is 'cc':
+        elif entity.type == 'cc':
             self.ccirc_gen(entity)
-        elif entity.type is 'gl':
+        elif entity.type == 'gl':
             self.gline_gen(entity)
-        elif entity.type is 'gc':
+        elif entity.type == 'gc':
             self.gcirc_gen(entity)
-        elif entity.type is 'ga':
+        elif entity.type == 'ga':
             self.garc_gen(entity)
-        elif entity.type is 'dl':
+        elif entity.type == 'dl':
             self.dim_gen(entity)
-        elif entity.type is 'tx':
+        elif entity.type == 'tx':
             self.text_gen(entity)
 
     def rem_draw(self, entity):
@@ -2002,7 +2002,7 @@ class PyurCad(tk.Tk):
         kvlist = list(self.curr.items())
         for k, v in kvlist:
             if v == entity:
-                if entity.type is 'cl':
+                if entity.type == 'cl':
                     self.cl_list.remove(entity.coords)
                 self.canvas.delete(k)
                 del self.curr[k]
